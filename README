@@ -1,0 +1,40 @@
+# L. David Baron <dbaron@dbaron.org>, June 2011
+
+# This work is available under the CC0 Public Domain Dedication:
+# http://creativecommons.org/publicdomain/zero/1.0/
+# To the extent possible under law, L. David Baron has waived all
+# copyright and related or neighboring rights to the tz.js library,
+# including the JavaScript code and the tools used to generate it.  This
+# work is published from the United States of America.
+
+This is tz.js, a library for working with time zones from JavaScript.
+
+It incorporates data from the tz database (also known as the Olson
+database), available at http://www.twinsun.com/tz/tz-link.htm and in
+the public domain.
+
+Files currently in the distribution are:
+
+  compiled-to-json.py
+
+    A working tool for converting the binary timezone data format (see
+    tzfile(5), available in the tzcode* file in the tz database) into
+    JSON suitable for use in tz.js.
+
+  source-to-json.py
+
+    Work in progress on a tool to replace compiled-to-json.py (at some
+    time in the indefinite future) with data allowing the time zone data
+    to be represented more compactly.
+
+A few notes about the goals of this library:
+
+This library intentionally does not support times prior to 1970.  This
+is because the timezone database does not split zones if there were
+differences within them prior to 1970, as described in
+http://www.twinsun.com/tz/tz-link.htm .  This means that while the
+information from the zone data is intended to be valid for the reference
+city prior to 1970, it is often not valid throughout the zone.
+Therefore data from the tz database about transitions prior to 1970 have
+been removed to save space, and times prior to 1970 are intentionally
+rejected.
