@@ -87,14 +87,31 @@ check_offset("America/Los_Angeles", 1300010400.001, -25200, "PDT");
 check_offset("America/Los_Angeles", 1308469553.734, -25200, "PDT");
 check_offset("America/Los_Angeles", 2519888399.999, -25200, "PDT");
 check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
+""")
 
+    def output_check_offset(zone, d, utcoff, abbr):
+        io.write("check_offset(\"{0}\", {1}, {2}, \"{3}\");\n" \
+                   .format(zone, d, utcoff, abbr));
+
+    date_zone_re = re.compile("^([^ ]*) ([+-])(\d{2}):(\d{2}):(\d{2})$")
+    def expected_for(zone, time):
+        date_process = subprocess.Popen(['date',
+                                         '--date=@' + str(math.trunc(time)),
+                                         '+%Z %::z'],
+                                        stdout = subprocess.PIPE,
+                                        env={"TZ": zone})
+        (abbr, sign, hours, mins, secs) = date_zone_re.match(
+            date_process.stdout.readline().rstrip("\n")).groups()
+        date_process.stdout.close()
+        utcoff = ((sign == "+") * 2 - 1) * \
+                 (3600 * int(hours) + 60 * int(mins) + int(secs))
+        return (utcoff, abbr)
+
+    io.write("""
 /*
  * Generate tests based on all the transitions shown by zdump for each zone.
  */
 """)
-    def output_check_offset(zone, d, utcoff, abbr):
-        io.write("check_offset(\"{0}\", {1}, {2}, \"{3}\");\n" \
-                   .format(zone, d, utcoff, abbr));
 
     date_process = subprocess.Popen(['date', '--date=' + str(STOP_YEAR) +
                                      '-01-01 00:00:00 UTC', '+%s'],
@@ -136,11 +153,12 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
             prev_abbr = abbr
         zdump.stdout.close()
         if first:
-            sys.stderr.write("warning: no data from zdump for " + zone + "\n")
-        else:
-            if first_after_1970:
-                output_test(0, prev_utcoff, prev_abbr)
-            output_test(stop_d, prev_utcoff, prev_abbr)
+            # This zone (Pacific/Johnston) has no transitions, but we
+            # can still test it.
+            (prev_utcoff, prev_abbr) = expected_for(zone, 0)
+        if first_after_1970:
+            output_test(0, prev_utcoff, prev_abbr)
+        output_test(stop_d, prev_utcoff, prev_abbr)
     io.write("""
 
 /*
@@ -159,7 +177,6 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
             rand_state = ((rand_state * 1664525) + 1013904223) % 0x100000000
 
     prng = lc_prng()
-    date_zone_re = re.compile("^([^ ]*) ([+-])(\d{2}):(\d{2}):(\d{2})$")
     for i in range(50000):
         zone = all_zones[math.trunc(prng.next() * len(all_zones))]
         # pick a random time in 1970...STOP_SECS.  Use two random
@@ -168,16 +185,7 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
         time = (prng.next() * STOP_SECS) + (prng.next() * 0x100000000 / 1000)
         time = time % STOP_SECS
         time = math.floor(time * 1000) / 1000
-        date_process = subprocess.Popen(['date',
-                                         '--date=@' + str(math.trunc(time)),
-                                         '+%Z %::z'],
-                                        stdout = subprocess.PIPE,
-                                        env={"TZ": zone})
-        (abbr, sign, hours, mins, secs) = date_zone_re.match(
-            date_process.stdout.readline().rstrip("\n")).groups()
-        date_process.stdout.close()
-        utcoff = ((sign == "+") * 2 - 1) * \
-                 (3600 * int(hours) + 60 * int(mins) + int(secs))
+        (utcoff, abbr) = expected_for(zone, time)
         output_check_offset(zone, time, utcoff, abbr)
 
     io.write("""
