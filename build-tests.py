@@ -26,6 +26,8 @@ __all__ = [
     "output_tests"
 ]
 
+STOP_YEAR = 2050
+
 os.environ["LC_ALL"] = "C"
 os.environ["LC_TIME"] = "C"
 
@@ -42,8 +44,7 @@ def output_tests(io):
 <pre id="output"></pre>
 <script>
 /*
- * Generate tests based on all the transitions shown by zdump -v -c 2050
- * on each zone
+ * Generate tests based on all the transitions shown by zdump for each zone.
  */
 
 var output_node = document.createTextNode("");
@@ -79,11 +80,16 @@ function check_offset(zone, d, utcoff, abbr)
 }
 
 """)
+    date_process = subprocess.Popen(['date', '--date=' + str(STOP_YEAR) +
+                                     '-01-01 00:00:00 UTC', '+%s'],
+                                    stdout = subprocess.PIPE)
+    stop_d = int(date_process.stdout.read().rstrip("\n"))
+    date_process.stdout.close()
     for zone in all_zones:
         def output_test(d, utcoff, abbr):
             io.write("check_offset(\"{0}\", {1}, {2}, \"{3}\");\n" \
                        .format(zone, d, utcoff, abbr));
-        zdump = subprocess.Popen(['zdump', '-v', '-c', '2050', zone],
+        zdump = subprocess.Popen(['zdump', '-v', '-c', str(STOP_YEAR), zone],
                                  stdout=subprocess.PIPE)
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
         first = True
@@ -103,19 +109,23 @@ function check_offset(zone, d, utcoff, abbr)
             d = int(date_process.stdout.read().rstrip("\n"))
             date_process.stdout.close()
             abbr = date_loc.split(" ")[-1]
-            if d < 0:
-                first = False
-                prev_utcoff = utcoff
-                prev_abbr = abbr
-                continue
-            if first_after_1970 and d != 0 and not first:
-                output_test(0, prev_utcoff, prev_abbr)
-            if first and d > 0:
-                output_test(0, utcoff, abbr)
-            first_after_1970 = False
+            if d >= 0:
+                if first_after_1970 and d != 0 and not first:
+                    output_test(0, prev_utcoff, prev_abbr)
+                if first and d > 0:
+                    output_test(0, utcoff, abbr)
+                output_test(d, utcoff, abbr)
+                first_after_1970 = False
             first = False
-            output_test(d, utcoff, abbr)
+            prev_utcoff = utcoff
+            prev_abbr = abbr
         zdump.stdout.close()
+        if first:
+            sys.stderr.write("warning: no data from zdump for " + zone + "\n")
+        else:
+            if first_after_1970:
+                output_test(0, prev_utcoff, prev_abbr)
+            output_test(stop_d, prev_utcoff, prev_abbr)
     io.write("""
 print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
 </script>

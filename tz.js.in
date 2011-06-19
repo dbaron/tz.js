@@ -20,8 +20,7 @@
         }
         return Number(str_or_undefined);
     }
-    var compute_rule_boundary = function(year_d, boundary, utc_offset_before) {
-        var year = (new Date((year_d + utc_offset_before) * 1000)).getUTCFullYear();
+    var compute_rule_boundary = function(year, boundary, utc_offset_before) {
         var m = boundary.match(g_start_end_re);
         var daystr = m[1];
         var time;
@@ -79,8 +78,14 @@
                     (3600 * Number(m[4]) + 60 * numorz(m[6]) + numorz(m[8])) *
                     ((m[3] == "-") ? 1 : -1);
             }
-            var start = compute_rule_boundary(d, m[9], offset);
-            var end = compute_rule_boundary(d, m[10], dst_offset);
+            // Arbitrarily pick one of offset and dst_offset to pick the
+            // year on the assumption nobody changes summer time at the
+            // new year.  (We do need to be consistent because we need the
+            // same year for both computations; otherwise can pick start
+            // and end in different years and get DST wrong.)
+            var year = (new Date((d + offset) * 1000)).getUTCFullYear();
+            var start = compute_rule_boundary(year, m[9], offset);
+            var end = compute_rule_boundary(year, m[10], dst_offset);
             var isdst = ((d < start) ^ (d < end)) ^ (end < start);
             if (isdst) {
                 abbr = dst_abbr;
