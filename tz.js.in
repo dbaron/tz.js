@@ -1,0 +1,6 @@
+/* tz.js revision @@REVISION@@ */
+(function() {
+    var gZones = @@ZONES@@;
+
+    // Exports:
+})();

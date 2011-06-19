@@ -15,6 +15,10 @@ the public domain.
 
 Files currently in the distribution are:
 
+  build.py
+
+    Python script to produce tz.js
+
   compiled-to-json.py
 
     A working tool for converting the binary timezone data format (see
@@ -26,6 +30,10 @@ Files currently in the distribution are:
     Work in progress on a tool to replace compiled-to-json.py (at some
     time in the indefinite future) with data allowing the time zone data
     to be represented more compactly.
+
+  tz.js.in
+
+    The source to tz.js, to be compiled using build.py.
 
 A few notes about the goals of this library:
 

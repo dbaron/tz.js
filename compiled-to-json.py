@@ -19,6 +19,10 @@
 import struct
 import json
 
+__all__ = [
+    "json_zones"
+]
+
 SOURCE_PREFIX = "/usr/share/zoneinfo/"
 ZONE_TAB = "zone.tab"
 
@@ -141,17 +145,20 @@ def read_zone(zone):
 
     return j
 
-zones = {}
+def json_zones():
+    zones = {}
 
-tab = open(SOURCE_PREFIX + ZONE_TAB, "r")
-for line in tab:
-    line = line.rstrip("\n")
-    line = line.partition("#")[0]
-    if line == "":
-        continue
-    fields = line.split("\t")
-    zone = fields[2]
-    zones[zone] = read_zone(zone)
-tab.close()
+    tab = open(SOURCE_PREFIX + ZONE_TAB, "r")
+    for line in tab:
+        line = line.rstrip("\n")
+        line = line.partition("#")[0]
+        if line == "":
+            continue
+        fields = line.split("\t")
+        zone = fields[2]
+        zones[zone] = read_zone(zone)
+    tab.close()
+    return json.dumps(zones, sort_keys=True)
 
-print json.dumps(zones, sort_keys=True)
+if __name__ == '__main__':
+    print json_zones()
