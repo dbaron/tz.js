@@ -1,4 +1,4 @@
-/* tz.js revision @@REVISION@@ ; tzdata revision @@TZDATA_REVISION@@ */
+/* tz.js @@VERSION@@ ; tzdata @@TZDATA_VERSION@@ */
 (function() {
     var gZones = @@ZONES@@;
 

@@ -12,18 +12,27 @@ OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
 if not os.path.exists(OUTPUT_DIR):
     os.mkdir(OUTPUT_DIR)
 
-revision_proc = subprocess.Popen(["git", "log", "--format=oneline", "HEAD"],
+version_proc = subprocess.Popen(["git", "log", "--format=oneline", "HEAD"],
                                  cwd=INPUT_DIR,
                                  stdout=subprocess.PIPE)
-revision = revision_proc.stdout.read(40)
-revision_proc.stdout.close()
+version = version_proc.stdout.read(40)
+version_proc.stdout.close()
 
-tzdata_revision_proc = subprocess.Popen(["dpkg-query", "--show",
-                                         "--showformat=${Version}\n", "tzdata"],
-                                         stdout=subprocess.PIPE)
-tzdata_revision = tzdata_revision_proc.stdout.read()
-tzdata_revision_proc.stdout.close()
-tzdata_revision = tzdata_revision.partition("-")[0]
+version_proc = subprocess.Popen(["git", "describe", "--tags", "--exact-match"],
+                                 cwd=INPUT_DIR,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+(describe_stdout, describe_stderr) = version_proc.communicate()
+if version_proc.returncode == 0:
+    # Use the tag as primary description and the hash in parentheses.
+    version = "{0} ({1})".format(describe_stdout.rstrip("\n"), version)
+
+version_proc = subprocess.Popen(["dpkg-query", "--show",
+                                  "--showformat=${Version}\n", "tzdata"],
+                                  stdout=subprocess.PIPE)
+tzdata_version = version_proc.stdout.read()
+version_proc.stdout.close()
+tzdata_version = tzdata_version.partition("-")[0]
 
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
@@ -34,8 +43,8 @@ tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
-tz_js_source = tz_js_source.replace("@@REVISION@@", revision)
-tz_js_source = tz_js_source.replace("@@TZDATA_REVISION@@", tzdata_revision)
+tz_js_source = tz_js_source.replace("@@VERSION@@", version)
+tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzdata_version)
 tz_js_source = tz_js_source.replace("@@ZONES@@", tz_json)
 
 tz_js_gz = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
