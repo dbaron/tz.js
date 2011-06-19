@@ -89,10 +89,7 @@ def read_zone(zone):
 
         # Now discard any zonedata now unreferenced (due to above trimming).
         # First, compute the set of zones that are used.
-        def add_to_set(s, v):
-            s[v] = True
-            return s
-        used_zones = reduce(add_to_set, ltidx, {})
+        used_zones = set(ltidx)
         # Second, compute the new zone indexes (or None for zones to be
         # dropped).
         newzoneidxs = []
@@ -120,9 +117,7 @@ def read_zone(zone):
         isstd = new_isstd
         isgmt = new_isgmt
         # Fourth, renumber the pointers into these indices.
-        def renumber(idx):
-            return newzoneidxs[idx]
-        ltidx = map(renumber, ltidx)
+        ltidx = [newzoneidxs[idx] for idx in ltidx]
 
         return { "times": times, "ltidx": ltidx, "types": types,
                  "isstd": isstd, "isgmt": isgmt }
@@ -159,9 +154,7 @@ def generate_zones():
     tab.close()
 
 def json_zones():
-    zones = {}
-    for zone in generate_zones():
-        zones[zone] = read_zone(zone)
+    zones = {zone:read_zone(zone) for zone in generate_zones()}
     return json.dumps(zones, sort_keys=True)
 
 if __name__ == '__main__':

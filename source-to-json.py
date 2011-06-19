@@ -39,26 +39,23 @@ print "/* Time zone data version " + tzversion + ". */"
 
 def read_lines():
     tar = tarfile.open(name=tzdatatar, mode="r:*")
-    members_of_tar = {
+    members_of_tar = set([
         # We use only these members of the tar file and ignore the rest,
         # since they have information we don't want.
-        "africa": True,
-        "antarctica": True,
-        "asia": True,
-        "australasia": True,
-        "europe": True,
-        "northamerica": True,
-        "southamerica": True
-    }
+        "africa",
+        "antarctica",
+        "asia",
+        "australasia",
+        "europe",
+        "northamerica",
+        "southamerica"
+    ])
     for tarinfo in tar:
         if not tarinfo.isfile() or not tarinfo.name in members_of_tar:
             continue
         # FIXME: Should set encoding on this |io| to iso-8859-1.
         io = tar.extractfile(tarinfo)
-        while True:
-            line = io.readline()
-            if line is "":
-                break
+        for line in io:
             line = line.rstrip("\n")
             line = line.partition("#")[0]
             line = line.rstrip(" \t")
@@ -79,7 +76,7 @@ def process_time(s):
         negate = -1
         s = s[1:]
     # FIXME: Do a little more validation on these integers?
-    words = map(int, s.split(":"))
+    words = [int(n) for n in s.split(":")]
     value = words[0] * 3600
     if len(words) > 1:
         value = value + words[1] * 60

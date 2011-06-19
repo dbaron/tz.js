@@ -37,7 +37,7 @@ generate_zones = imp.load_source("compiled_to_json",
                                  os.path.join(os.path.dirname(__file__),
                                               "compiled-to-json.py")
                                  ).generate_zones
-all_zones = map(None, generate_zones())
+all_zones = list(generate_zones())
 
 def output_tests(io):
     io.write("""<!DOCTYPE HTML>
