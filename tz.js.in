@@ -107,7 +107,7 @@
             }
         } while (min != max);
         var lttype = zi.types[zi.ltidx[min]];
-        return { offset: lttype.o, abbr: lttype.a }
+        return { offset: lttype.o, abbr: lttype.a };
     }
 
     var public_zoneAt = function(zone, dateObj) {
@@ -115,7 +115,7 @@
         var d = dateObj.valueOf() / 1000;
 
         if (d < 0) {
-            throw "Dates prior to 1970 not allowed."
+            throw "Dates prior to 1970 not allowed.";
         }
 
         /* zic outputs transitions through the end of 2037; after that
@@ -124,6 +124,39 @@
             return zone_pair_from_rule(zi.rule, d);
         }
         return zone_pair_from_table(zi, d);
+    }
+
+    var public_datesFor = function(zone, year, month, day, hour, minute,
+                                   second) {
+        // Assume that zones do not change time more than once in any 48
+        // hour period, and that no zone is more than 24 hours from UTC.
+        //
+        // If those assumptions are false, we might fail to return a
+        // result that we should have returned, but
+        // make_and_check_result ensures we'll never return an incorrect
+        // one.
+        var du = Date.UTC(year, month-1, day, hour, minute, second) / 1000;
+        var d1 = du - gSecsPerDay;
+        var d2 = du + gSecsPerDay;
+
+        var z1 = public_zoneAt(zone, new Date(d1 * 1000));
+        var z2 = public_zoneAt(zone, new Date(d2 * 1000));
+
+        var results = [];
+        var make_and_check_result = function(offset) {
+            var d = du - offset; // our hypothetical date
+            var date = new Date(d * 1000);
+            var zi = public_zoneAt(zone, date);
+            if (zi.offset == offset) {
+                zi.date = date;
+                results.push(zi);
+            }
+        }
+        make_and_check_result(z1.offset);
+        if (z1.offset != z2.offset) {
+            make_and_check_result(z2.offset);
+        }
+        return results;
     }
 
     // Exports:
@@ -145,6 +178,51 @@
          * (or 25200 seconds), and used the abbreviation PDT (for
          * Pacific Daylight Time).
          */
-        zoneAt: public_zoneAt
+        zoneAt: public_zoneAt,
+
+        /**
+         * datesFor(zone, year, month, day, hour, minute, second)
+         *   Given a valid named time zone and a local time with:
+         *     year >= 1970 (but not on January 1)
+         *     month 1-12
+         *     day 1-31
+         *     hour 0-23
+         *     minute 0-59
+         *     second 0-59
+         * returns an *array* of objects with three properties, the two
+         * described above for zoneAt, and then a "date" property with a
+         * JavaScript date object.  This array may have 0, 1, or 2
+         * elements (and in theory it may have more in the future,
+         * though the current code never produces such results).
+         *
+         * For example,
+         *   window.tz.datesFor("America/Los_Angeles", 2011, 1, 1, 0, 0, 0)
+         * will produce one result:
+         * [
+         *   { offset: -28800, abbr: "PST", date: (new Date(1293868800000)) }
+         * ]
+         * representing the moment of the new year 2011 in Los Angeles.
+         * This is the common case.
+         *
+         * However, around summer time changes zero or two results can
+         * occur.  For example:
+         *   window.tz.datesFor("America/Los_Angeles", 2011, 3, 13, 2, 30, 0)
+         * will produce an empty array since the start of summer time
+         * causes the clock to jump from 2011-03-13 01:59:59 PST to
+         * 2011-03-13 03:00:00 PDT.
+         *
+         * But this example:
+         *   window.tz.datesFor("America/Los_Angeles", 2011, 11, 6, 1, 30, 0)
+         * will produce two results:
+         * [
+         *   { offset: -25200, abbr: "PDT", date: (new Date(1320568200000)) }
+         *   { offset: -28800, abbr: "PST", date: (new Date(1320571800000)) }
+         * ]
+         * representing times one hour apart, since the summer time
+         * change makes the clock jump from 2011-11-06 01:59:59 PDT to
+         * 2011-11-06 01:00:00 PST, and thus it passes 01:30 twice that
+         * day.
+         */
+        datesFor: public_datesFor
     };
 })();

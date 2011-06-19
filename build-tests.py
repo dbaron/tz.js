@@ -187,6 +187,26 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
         time = math.floor(time * 1000) / 1000
         (utcoff, abbr) = expected_for(zone, time)
         output_check_offset(zone, time, utcoff, abbr)
+    io.write("""
+/*
+ * Some fixed tests for window.tz.datesFor
+ */
+var df = window.tz.datesFor("America/Los_Angeles", 2011, 1, 1, 0, 0, 0);
+is(df.length, 1, "datesFor (1) length");
+is(df[0].offset, -28800, "datesFor(1) [0].offset");
+is(df[0].abbr, "PST", "datesFor(1) [0].abbr");
+is(df[0].date.valueOf(), 1293868800000, "datesFor(1) [0].date.valueOf()");
+df = window.tz.datesFor("America/Los_Angeles", 2011, 3, 13, 2, 30, 0);
+is(df.length, 0, "datesFor (2) length");
+df = window.tz.datesFor("America/Los_Angeles", 2011, 11, 6, 1, 30, 0);
+is(df.length, 2, "datesFor (3) length");
+is(df[0].offset, -25200, "datesFor(3) [0].offset");
+is(df[0].abbr, "PDT", "datesFor(3) [0].abbr");
+is(df[0].date.valueOf(), 1320568200000, "datesFor(3) [0].date.valueOf()");
+is(df[1].offset, -28800, "datesFor(3) [1].offset");
+is(df[1].abbr, "PST", "datesFor(3) [1].abbr");
+is(df[1].date.valueOf(), 1320571800000, "datesFor(3) [1].date.valueOf()");
+""")
 
     io.write("""
 print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
