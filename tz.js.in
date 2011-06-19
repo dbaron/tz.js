@@ -118,9 +118,9 @@
             throw "Dates prior to 1970 not allowed.";
         }
 
-        /* zic outputs transitions through the end of 2037; after that
-           we have to use the rule, if it exists */
-        if (d >= 2145916800 && zi.rule) {
+        // per tzfile(5), the rule, if it exists, is for times after the
+        // last transition in the file
+        if (d >= zi.times[zi.times.length-1] && zi.rule) {
             return zone_pair_from_rule(zi.rule, d);
         }
         return zone_pair_from_table(zi, d);
