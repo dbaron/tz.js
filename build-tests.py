@@ -21,12 +21,14 @@ import imp
 import os.path
 import subprocess
 import re
+import math
 
 __all__ = [
     "output_tests"
 ]
 
 STOP_YEAR = 2050
+STOP_SECS = 2524608000 # 2050, in seconds since the epoch
 
 os.environ["LC_ALL"] = "C"
 os.environ["LC_TIME"] = "C"
@@ -43,10 +45,6 @@ def output_tests(io):
 <script src="tz.js"></script>
 <pre id="output"></pre>
 <script>
-/*
- * Generate tests based on all the transitions shown by zdump for each zone.
- */
-
 var output_node = document.createTextNode("");
 document.getElementById("output").appendChild(output_node);
 function print(s)
@@ -79,7 +77,25 @@ function check_offset(zone, d, utcoff, abbr)
     is(z.abbr, abbr, zone + " at " + d);
 }
 
+/*
+ * Check a non-round-second values, since the tests below are largely round.
+ *
+ * The last two could become invalid in the future.
+ */
+check_offset("America/Los_Angeles", 1300010399.999, -28800, "PST");
+check_offset("America/Los_Angeles", 1300010400.001, -25200, "PDT");
+check_offset("America/Los_Angeles", 1308469553.734, -25200, "PDT");
+check_offset("America/Los_Angeles", 2519888399.999, -25200, "PDT");
+check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
+
+/*
+ * Generate tests based on all the transitions shown by zdump for each zone.
+ */
 """)
+    def output_check_offset(zone, d, utcoff, abbr):
+        io.write("check_offset(\"{0}\", {1}, {2}, \"{3}\");\n" \
+                   .format(zone, d, utcoff, abbr));
+
     date_process = subprocess.Popen(['date', '--date=' + str(STOP_YEAR) +
                                      '-01-01 00:00:00 UTC', '+%s'],
                                     stdout = subprocess.PIPE)
@@ -87,8 +103,7 @@ function check_offset(zone, d, utcoff, abbr)
     date_process.stdout.close()
     for zone in all_zones:
         def output_test(d, utcoff, abbr):
-            io.write("check_offset(\"{0}\", {1}, {2}, \"{3}\");\n" \
-                       .format(zone, d, utcoff, abbr));
+            output_check_offset(zone, d, utcoff, abbr)
         zdump = subprocess.Popen(['zdump', '-v', '-c', str(STOP_YEAR), zone],
                                  stdout=subprocess.PIPE)
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
@@ -126,6 +141,45 @@ function check_offset(zone, d, utcoff, abbr)
             if first_after_1970:
                 output_test(0, prev_utcoff, prev_abbr)
             output_test(stop_d, prev_utcoff, prev_abbr)
+    io.write("""
+
+/*
+ * Generate a fixed set of random tests using a linear-congruential
+ * PRNG.  This does a good bit of testing of the space in a random way,
+ * but uses a fixed random seed to always get the same set of tests.
+ * See http://en.wikipedia.org/wiki/Linear_congruential_generator (using
+ * the numbers from Numerical Recipes).
+ */
+""")
+    def lc_prng(): # a generator
+        # a randomly (once) generated number in [0,2^32)
+        rand_state = 1938266273;
+        while True:
+            yield 1.0 * rand_state / 0x100000000 # value in [0,1)
+            rand_state = ((rand_state * 1664525) + 1013904223) % 0x100000000
+
+    prng = lc_prng()
+    date_zone_re = re.compile("^([^ ]*) ([+-])(\d{2}):(\d{2}):(\d{2})$")
+    for i in range(50000):
+        zone = all_zones[math.trunc(prng.next() * len(all_zones))]
+        # pick a random time in 1970...STOP_SECS.  Use two random
+        # numbers so we use the full space, random down to the
+        # millisecond.
+        time = (prng.next() * STOP_SECS) + (prng.next() * 0x100000000 / 1000)
+        time = time % STOP_SECS
+        time = math.floor(time * 1000) / 1000
+        date_process = subprocess.Popen(['date',
+                                         '--date=@' + str(math.trunc(time)),
+                                         '+%Z %::z'],
+                                        stdout = subprocess.PIPE,
+                                        env={"TZ": zone})
+        (abbr, sign, hours, mins, secs) = date_zone_re.match(
+            date_process.stdout.readline().rstrip("\n")).groups()
+        date_process.stdout.close()
+        utcoff = ((sign == "+") * 2 - 1) * \
+                 (3600 * int(hours) + 60 * int(mins) + int(secs))
+        output_check_offset(zone, time, utcoff, abbr)
+
     io.write("""
 print("Totals:  " + pass_count + " passed, " + fail_count + " failed.");
 </script>
