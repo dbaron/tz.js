@@ -19,6 +19,13 @@ revision_proc = subprocess.Popen(["git", "log", "--format=oneline", "HEAD"],
 revision = revision_proc.stdout.read(40)
 revision_proc.stdout.close()
 
+tzdata_revision_proc = subprocess.Popen(["dpkg-query", "--show",
+                                         "--showformat=${Version}\n", "tzdata"],
+                                         stdout=subprocess.PIPE)
+tzdata_revision = tzdata_revision_proc.stdout.read()
+tzdata_revision_proc.stdout.close()
+tzdata_revision = tzdata_revision.partition("-")[0]
+
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
                                               "compiled-to-json.py"))
@@ -29,6 +36,7 @@ tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
 tz_js_source = tz_js_source.replace("@@REVISION@@", revision)
+tz_js_source = tz_js_source.replace("@@TZDATA_REVISION@@", tzdata_revision)
 tz_js_source = tz_js_source.replace("@@ZONES@@", tz_json)
 
 tz_js = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
