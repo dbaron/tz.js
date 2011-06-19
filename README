@@ -17,7 +17,11 @@ Files currently in the distribution are:
 
   build.py
 
-    Python script to produce tz.js
+    Python script to produce all output (tz.js and tests).
+
+  build-tests.py
+
+    Python script to produce the test output (invoked by build.py).
 
   compiled-to-json.py
 

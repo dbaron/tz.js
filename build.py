@@ -2,7 +2,6 @@
 
 import os
 import os.path
-import shutil
 import subprocess
 import gzip
 import imp
@@ -10,8 +9,8 @@ import imp
 INPUT_DIR = os.path.dirname(__file__)
 OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
 
-shutil.rmtree(OUTPUT_DIR)
-os.mkdir(OUTPUT_DIR)
+if not os.path.exists(OUTPUT_DIR):
+    os.mkdir(OUTPUT_DIR)
 
 revision_proc = subprocess.Popen(["git", "log", "--format=oneline", "HEAD"],
                                  cwd=INPUT_DIR,
@@ -47,9 +46,11 @@ tz_js = open(os.path.join(OUTPUT_DIR, "tz.js"), "wb")
 tz_js.write(tz_js_source)
 tz_js.close()
 
-tz_tests_module = imp.load_source("tz_test_generator",
-                                  os.path.join(INPUT_DIR,
-                                               "build-tests.py"))
-tests_io = open(os.path.join(OUTPUT_DIR, "test-tz.html"), "wb")
-tz_tests_module.output_tests(tests_io)
-tests_io.close()
+test_input_file = os.path.join(INPUT_DIR, "build-tests.py")
+test_output_file = os.path.join(OUTPUT_DIR, "test-tz.html")
+if (not os.path.exists(test_output_file)) or \
+   os.stat(test_input_file).st_mtime > os.stat(test_output_file).st_mtime:
+    tz_tests_module = imp.load_source("tz_test_generator", test_input_file)
+    tests_io = open(test_output_file, "wb")
+    tz_tests_module.output_tests(tests_io)
+    tests_io.close()
