@@ -1,13 +1,17 @@
 #!/usr/bin/python
 
-# L. David Baron <dbaron@dbaron.org>, June 2011
+# tz.js - Library for working with timezones in JavaScript
 
-# This work is available under the CC0 Public Domain Dedication:
-# http://creativecommons.org/publicdomain/zero/1.0/
-# To the extent possible under law, L. David Baron has waived all
-# copyright and related or neighboring rights to the tz.js library,
-# including the JavaScript code and the tools used to generate it.  This
-# work is published from the United States of America.
+# Written in 2011 by L. David Baron <dbaron@dbaron.org>
+
+# To the extent possible under law, the author(s) have dedicated all
+# copyright and related and neighboring rights to this software to the
+# public domain worldwide.  This software is distributed without any
+# warranty.
+#
+# You should have received a copy of the CC0 Public Domain Dedication
+# along with this software.  If not, see
+# <http://creativecommons.org/publicdomain/zero/1.0/>.
 
 # This script converts the compiled time zone data from the Olson time
 # zone database (http://www.twinsun.com/tz/tz-link.htm), which is
