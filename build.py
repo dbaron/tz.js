@@ -39,6 +39,17 @@ tz_js_source = tz_js_source.replace("@@REVISION@@", revision)
 tz_js_source = tz_js_source.replace("@@TZDATA_REVISION@@", tzdata_revision)
 tz_js_source = tz_js_source.replace("@@ZONES@@", tz_json)
 
-tz_js = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
+tz_js_gz = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
+tz_js_gz.write(tz_js_source)
+tz_js_gz.close()
+
+tz_js = open(os.path.join(OUTPUT_DIR, "tz.js"), "wb")
 tz_js.write(tz_js_source)
 tz_js.close()
+
+tz_tests_module = imp.load_source("tz_test_generator",
+                                  os.path.join(INPUT_DIR,
+                                               "build-tests.py"))
+tests_io = open(os.path.join(OUTPUT_DIR, "test-tz.html"), "wb")
+tz_tests_module.output_tests(tests_io)
+tests_io.close()

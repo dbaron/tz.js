@@ -20,6 +20,7 @@ import struct
 import json
 
 __all__ = [
+    "generate_zones",
     "json_zones"
 ]
 
@@ -145,9 +146,7 @@ def read_zone(zone):
 
     return j
 
-def json_zones():
-    zones = {}
-
+def generate_zones():
     tab = open(SOURCE_PREFIX + ZONE_TAB, "r")
     for line in tab:
         line = line.rstrip("\n")
@@ -156,8 +155,13 @@ def json_zones():
             continue
         fields = line.split("\t")
         zone = fields[2]
-        zones[zone] = read_zone(zone)
+        yield zone
     tab.close()
+
+def json_zones():
+    zones = {}
+    for zone in generate_zones():
+        zones[zone] = read_zone(zone)
     return json.dumps(zones, sort_keys=True)
 
 if __name__ == '__main__':

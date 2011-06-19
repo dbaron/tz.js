@@ -2,5 +2,144 @@
 (function() {
     var gZones = @@ZONES@@;
 
+    var is_leap = function(year) {
+        return year % 4 == 0 && (year % 100 != 0 || year % 400 == 0);
+    }
+
+    var gDaysInMonth = [ 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 ];
+    var gSecsPerDay = 86400;
+    var gSecsPerWeek = 604800;
+
+    var g_rule_main_re = /^([^\d:,+-]+)([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?(.*)/;
+    var g_rule_dst_re = /^([^\d:,+-]+)(([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?,([^,]*),([^,]*)$/;
+    var g_start_end_re = /^([^\/]+)(\/(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
+    var g_mwd_re = /^M(\d+)\.(\d+)\.(\d+)$/;
+    var numorz = function(str_or_undefined) {
+        if (typeof(str_or_undefined) == "undefined") {
+            return 0;
+        }
+        return Number(str_or_undefined);
+    }
+    var compute_rule_boundary = function(year_d, boundary, utc_offset_before) {
+        var year = (new Date((year_d + utc_offset_before) * 1000)).getUTCFullYear();
+        var m = boundary.match(g_start_end_re);
+        var daystr = m[1];
+        var time;
+        if (typeof(m[2]) == "undefined") {
+            // time is implicitly 2am local time
+            time = 7200;
+        } else {
+            time = 3600 * Number(m[3]) + 60 * numorz(m[5]) + numorz(m[7]);
+        }
+        // Based on daystr, set |d| to the start of the relevant day in UTC.
+        var d;
+        if (daystr[0] == "M") {
+            m = daystr.match(g_mwd_re);
+            var month = Number(m[1]);
+            var week = Number(m[2]);
+            var weekday = Number(m[3]);
+            d = Date.UTC(year, month-1) / 1000;
+            if (week == 5) {
+                d += (gDaysInMonth[month] - 7) * gSecsPerDay;
+            } else {
+                d += (week - 1) * gSecsPerWeek;
+            }
+            var weekstartday = (new Date(d * 1000)).getUTCDay();
+            d += ((weekday - weekstartday + 7) % 7) * gSecsPerDay
+        } else if (daystr[0] == "J") {
+            // Julian day, 1-365, never counting Feb. 29
+            // This means 59 is Feb 28, 60 is Mar 1.
+            var n = Number(daystr.substr(1));
+            var j = n - 1 + (n > 59 && is_leap(year));
+            d = Date.UTC(year, 0) + j * gSecsPerDay;
+        } else {
+            // Julian day, 0-365, counting Feb. 29 when leap year
+            var j = Number(daystr);
+            d = Date.UTC(year, 0) + j * gSecsPerDay;
+        }
+        return d + time - utc_offset_before;
+    }
+    var zone_pair_from_rule = function(rule, d) {
+        // See http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html
+        var m = rule.match(g_rule_main_re);
+        var abbr = m[1];
+        // In POSIX TZ format, UTC offsets are backwards.
+        var offset = (3600 * Number(m[3]) + 60 * numorz(m[5]) + numorz(m[7])) *
+                     ((m[2] == "-") ? 1 : -1);
+        var dst_part = m[8];
+        if (dst_part != "") {
+            m = dst_part.match(g_rule_dst_re);
+            var dst_abbr = m[1];
+            var dst_offset;
+            if (typeof(m[2]) == "undefined") {
+                // Optional offset omitted, thus implicitly 1 hour from norm.
+                dst_offset = offset + 3600;
+            } else {
+                dst_offset =
+                    (3600 * Number(m[4]) + 60 * numorz(m[6]) + numorz(m[8])) *
+                    ((m[3] == "-") ? 1 : -1);
+            }
+            var start = compute_rule_boundary(d, m[9], offset);
+            var end = compute_rule_boundary(d, m[10], dst_offset);
+            var isdst = ((d < start) ^ (d < end)) ^ (end < start);
+            if (isdst) {
+                abbr = dst_abbr;
+                offset = dst_offset;
+            }
+        }
+        return { offset: offset, abbr: abbr };
+    }
+
+    var zone_pair_from_table = function(zi, d) {
+        // binary search the list of times
+        var min = 0, max = zi.times.length - 1; // both inclusive
+        do {
+            var idx = min + Math.floor((max - min + 1) / 2);
+            if (d < zi.times[idx]) {
+                max = idx - 1;
+            } else {
+                min = idx;
+            }
+        } while (min != max);
+        var lttype = zi.types[zi.ltidx[min]];
+        return { offset: lttype.o, abbr: lttype.a }
+    }
+
+    var public_zoneAt = function(zone, dateObj) {
+        var zi = gZones[zone]; // caller required to provide valid zone
+        var d = dateObj.valueOf() / 1000;
+
+        if (d < 0) {
+            throw "Dates prior to 1970 not allowed."
+        }
+
+        /* zic outputs transitions through the end of 2037; after that
+           we have to use the rule, if it exists */
+        if (d >= 2145916800 && zi.rule) {
+            return zone_pair_from_rule(zi.rule, d);
+        }
+        return zone_pair_from_table(zi, d);
+    }
+
     // Exports:
+    window.tz = {
+        /**
+         * zoneAt(zone, dateObj)
+         *   Given a valid named time zone and a JavaScript date object,
+         *   return a zone object with two properties:
+         *     offset: the UTC offset for the zone, in seconds
+         *     abbr: the correct short name for the zone
+         * For example,
+         *   window.tz.zoneAt("America/Los_Angeles",
+         *                    new Date(Date.UTC(1976,6,4,18,0,0)))
+         * (the time there is 1976-07-04 18:00:00 UTC) should return
+         * an object like this:
+         *   { offset: -25200, abbr: "PDT" }
+         * since the America/Los_Angeles time zone observed summer time
+         * at the time given, and was thus at offset UTC minus 7 hours
+         * (or 25200 seconds), and used the abbreviation PDT (for
+         * Pacific Daylight Time).
+         */
+        zoneAt: public_zoneAt
+    };
 })();
