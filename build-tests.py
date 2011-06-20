@@ -99,18 +99,23 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
                    .format(zone, d, utcoff, abbr));
 
     date_zone_re = re.compile("^([^ ]*) ([+-])(\d{2}):(\d{2}):(\d{2})$")
-    def expected_for(zone, time):
-        date_process = subprocess.Popen(['date',
-                                         '--date=@' + str(math.trunc(time)),
-                                         '+%Z %::z'],
-                                        stdout = subprocess.PIPE,
-                                        env={"TZ": zone})
+    def write_expected(time):
+        return "@" + str(math.trunc(time))
+    def read_expected(dateprocess):
         (abbr, sign, hours, mins, secs) = date_zone_re.match(
-            date_process.stdout.readline().rstrip("\n")).groups()
-        date_process.stdout.close()
+            dateprocess.stdout.readline().rstrip("\n")).groups()
         utcoff = ((sign == "+") * 2 - 1) * \
                  (3600 * int(hours) + 60 * int(mins) + int(secs))
         return (utcoff, abbr)
+    def expected_for(zone, time):
+        date_process = subprocess.Popen(['date',
+                                         '--date=' + write_expected(time),
+                                         '+%Z %::z'],
+                                        stdout = subprocess.PIPE,
+                                        env={"TZ": zone})
+        result = read_expected(date_process)
+        date_process.stdout.close()
+        return result
 
     io.write("""
 /*
@@ -192,16 +197,34 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
             rand_state = ((rand_state * 1664525) + 1013904223) % 0x100000000
 
     prng = lc_prng()
-    for i in range(50000):
-        zone = all_zones[math.trunc(prng.next() * len(all_zones))]
+    def random_time():
         # pick a random time in 1970...STOP_SECS.  Use two random
         # numbers so we use the full space, random down to the
         # millisecond.
         time = (prng.next() * STOP_SECS) + (prng.next() * 0x100000000 / 1000)
         time = time % STOP_SECS
         time = math.floor(time * 1000) / 1000
-        (utcoff, abbr) = expected_for(zone, time)
-        output_check_offset(zone, time, utcoff, abbr)
+        return time
+    # For each time zone, we make 100 random tests.  Do each zone
+    # together so that we can easily use a single date process for each
+    # zone.
+    for zone in all_zones:
+        random_times = [random_time() for i in range(100)]
+        # Write all the dates to one file and run them through a single
+        # date process, for speed.
+        datefile = tempfile.NamedTemporaryFile(delete=False)
+        for time in random_times:
+            datefile.write(write_expected(time) + "\n")
+        datefile.close()
+        date_process = subprocess.Popen(['date', '--file=' + datefile.name,
+                                         '+%Z %::z'],
+                                        stdout = subprocess.PIPE,
+                                        env={"TZ": zone})
+        for time in random_times:
+            (utcoff, abbr) = read_expected(date_process)
+            output_check_offset(zone, time, utcoff, abbr)
+        date_process.stdout.close()
+        os.unlink(datefile.name)
     io.write("""
 /*
  * Some fixed tests for window.tz.datesFor
