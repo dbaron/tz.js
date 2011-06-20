@@ -26,6 +26,7 @@ import os.path
 import subprocess
 import re
 import math
+import tempfile
 
 __all__ = [
     "output_tests"
@@ -122,28 +123,37 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
                                     stdout = subprocess.PIPE)
     stop_d = int(date_process.stdout.read().rstrip("\n"))
     date_process.stdout.close()
-    for zone in all_zones:
-        def output_test(d, utcoff, abbr):
-            output_check_offset(zone, d, utcoff, abbr)
+    def zdump_for(zone):
         zdump = subprocess.Popen(['zdump', '-v', '-c', str(STOP_YEAR), zone],
                                  stdout=subprocess.PIPE)
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
-        first = True
-        first_after_1970 = True
-        prev_utcoff = None
-        prev_abbr = None
         for line in zdump.stdout:
             line = line.rstrip("\n")
             if line.endswith(" = NULL"):
                 continue
-            (date_utc, date_loc, isdst, utcoff) = zdump_re.match(line).groups()
+            yield zdump_re.match(line).groups()
+    # FIXME: spread this across cores
+    zdumps = [(zone, list(zdump_for(zone))) for zone in all_zones]
+    # Write all the dates to one file and run them through a single
+    # date process, for speed.
+    datefile = tempfile.NamedTemporaryFile(delete=False)
+    for (zone, zdump) in zdumps:
+        for (date_utc, date_loc, isdst, utcoff) in zdump:
+            datefile.write(date_utc + "\n")
+    datefile.close()
+    date_process = subprocess.Popen(['date', '--file=' + datefile.name, '+%s'],
+                                    stdout = subprocess.PIPE)
+    for (zone, zdump) in zdumps:
+        def output_test(d, utcoff, abbr):
+            output_check_offset(zone, d, utcoff, abbr)
+        first = True
+        first_after_1970 = True
+        prev_utcoff = None
+        prev_abbr = None
+        for (date_utc, date_loc, isdst, utcoff) in zdump:
             isdst = bool(isdst) # not really needed
             utcoff = int(utcoff)
-            date_process = subprocess.Popen(['date', '--date=' + date_utc,
-                                             '+%s'],
-                                            stdout = subprocess.PIPE)
-            d = int(date_process.stdout.read().rstrip("\n"))
-            date_process.stdout.close()
+            d = int(date_process.stdout.readline().rstrip("\n"))
             abbr = date_loc.split(" ")[-1]
             if d >= 0:
                 if first_after_1970 and d != 0 and not first:
@@ -155,7 +165,6 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
             first = False
             prev_utcoff = utcoff
             prev_abbr = abbr
-        zdump.stdout.close()
         if first:
             # This zone (Pacific/Johnston) has no transitions, but we
             # can still test it.
@@ -163,6 +172,8 @@ check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
         if first_after_1970:
             output_test(0, prev_utcoff, prev_abbr)
         output_test(stop_d, prev_utcoff, prev_abbr)
+    date_process.stdout.close()
+    os.unlink(datefile.name)
     io.write("""
 
 /*
