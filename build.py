@@ -18,6 +18,7 @@ import os.path
 import subprocess
 import gzip
 import imp
+import re
 
 INPUT_DIR = os.path.dirname(__file__)
 OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
@@ -39,6 +40,21 @@ version_proc = subprocess.Popen(["git", "describe", "--tags", "--exact-match"],
 if version_proc.returncode == 0:
     # Use the tag as primary description and the hash in parentheses.
     version = "{0} ({1})".format(describe_stdout.rstrip("\n"), version)
+
+# If this looks like a github repository, compute the HTTP URL from the
+# git URL and include that as part of the version.
+version_proc = subprocess.Popen(["git", "remote", "show", "-n", "origin"],
+                                 cwd=INPUT_DIR,
+                                 stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE)
+(describe_stdout, describe_stderr) = version_proc.communicate()
+if version_proc.returncode == 0:
+    fetch_re = re.compile("^  Fetch URL: git@github.com:(.*)\.git$",
+                          re.MULTILINE)
+    m = fetch_re.search(describe_stdout)
+    if m is not None:
+        url = "https://github.com/" + m.groups()[0]
+        version = "{0} {1}".format(url, version)
 
 version_proc = subprocess.Popen(["dpkg-query", "--show",
                                   "--showformat=${Version}\n", "tzdata"],
