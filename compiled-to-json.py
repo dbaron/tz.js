@@ -156,6 +156,8 @@ def generate_zones():
         zone = fields[2]
         yield zone
     tab.close()
+    # Also generate "Etc/UTC" in addition to the geographic zones.
+    yield "Etc/UTC"
 
 def json_zones():
     zones = {zone:read_zone(zone) for zone in generate_zones()}

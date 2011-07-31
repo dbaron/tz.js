@@ -92,6 +92,17 @@ check_offset("America/Los_Angeles", 1300010400.001, -25200, "PDT");
 check_offset("America/Los_Angeles", 1308469553.734, -25200, "PDT");
 check_offset("America/Los_Angeles", 2519888399.999, -25200, "PDT");
 check_offset("America/Los_Angeles", 2519888400.001, -28800, "PST");
+
+/*
+ * Use the same values to test Etc/UTC, which we don't otherwise test.
+ */
+check_offset("Etc/UTC", 1300010399.999, 0, "UTC");
+check_offset("Etc/UTC", 1300010400, 0, "UTC");
+check_offset("Etc/UTC", 1300010400.001, 0, "UTC");
+check_offset("Etc/UTC", 1308469553.734, 0, "UTC");
+check_offset("Etc/UTC", 2519888399.999, 0, "UTC");
+check_offset("Etc/UTC", 2519888400, 0, "UTC");
+check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
 """)
 
     def output_check_offset(zone, d, utcoff, abbr):
