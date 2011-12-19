@@ -14,6 +14,8 @@
  */
 /* tz.js @@VERSION@@ ; tzdata @@TZDATA_VERSION@@ */
 (function() {
+    "use strict";
+
     var gZones = @@ZONES@@;
 
     var is_leap = function(year) {
