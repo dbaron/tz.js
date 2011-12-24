@@ -175,6 +175,19 @@
         return results;
     }
 
+    var gAllZones = null;
+    var public_allZones = function() {
+        if (!gAllZones) {
+            var zones = [];
+            for (var zone in gZones) {
+                zones.push(zone);
+            }
+            zones.sort();
+            gAllZones = zones;
+        }
+        return gAllZones;
+    }
+
     // Exports:
     window.tz = {
         /**
@@ -239,6 +252,13 @@
          * 2011-11-06 01:00:00 PST, and thus it passes 01:30 twice that
          * day.
          */
-        datesFor: public_datesFor
+        datesFor: public_datesFor,
+
+        /**
+         * Return an array listing all supported named time zones, in
+         * alphabetical order.  The same array will be returned from
+         * each call.
+         */
+        allZones: public_allZones
     };
 })();
