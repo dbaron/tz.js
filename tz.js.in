@@ -197,8 +197,8 @@
          *     offset: the UTC offset for the zone, in seconds
          *     abbr: the correct short name for the zone
          * For example,
-         *   window.tz.zoneAt("America/Los_Angeles",
-         *                    new Date(Date.UTC(1976,6,4,18,0,0)))
+         *   tz.zoneAt("America/Los_Angeles",
+         *             new Date(Date.UTC(1976,6,4,18,0,0)))
          * (the time there is 1976-07-04 18:00:00 UTC) should return
          * an object like this:
          *   { offset: -25200, abbr: "PDT" }
@@ -225,7 +225,7 @@
          * though the current code never produces such results).
          *
          * For example,
-         *   window.tz.datesFor("America/Los_Angeles", 2011, 1, 1, 0, 0, 0)
+         *   tz.datesFor("America/Los_Angeles", 2011, 1, 1, 0, 0, 0)
          * will produce one result:
          * [
          *   { offset: -28800, abbr: "PST", date: (new Date(1293868800000)) }
@@ -235,13 +235,13 @@
          *
          * However, around summer time changes zero or two results can
          * occur.  For example:
-         *   window.tz.datesFor("America/Los_Angeles", 2011, 3, 13, 2, 30, 0)
+         *   tz.datesFor("America/Los_Angeles", 2011, 3, 13, 2, 30, 0)
          * will produce an empty array since the start of summer time
          * causes the clock to jump from 2011-03-13 01:59:59 PST to
          * 2011-03-13 03:00:00 PDT.
          *
          * But this example:
-         *   window.tz.datesFor("America/Los_Angeles", 2011, 11, 6, 1, 30, 0)
+         *   tz.datesFor("America/Los_Angeles", 2011, 11, 6, 1, 30, 0)
          * will produce two results:
          * [
          *   { offset: -25200, abbr: "PDT", date: (new Date(1320568200000)) }
