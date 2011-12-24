@@ -54,3 +54,25 @@ city prior to 1970, it is often not valid throughout the zone.
 Therefore data from the tz database about transitions prior to 1970 have
 been removed to save space, and times prior to 1970 are intentionally
 rejected.
+
+
+Build instructions:
+
+  * You need to build on a Unix-ish system (I use Ubuntu Linux; Mac OS
+    X probably also works) or you need a copy of the timezone data that
+    typically comes with one.
+
+  * You may need to adjust the paths at the top of compiled-to-json.py.
+
+  * Run build.py, and the output appears in the output/ subdirectory.
+
+  * To properly serve tz.js.gz on an Apache server, you probably need
+    this in an .htaccess file:
+<FilesMatch \.js\.gz$>
+  ForceType text/javascript
+  AddDefaultCharset UTF-8
+  AddEncoding x-gzip gz
+</FilesMatch>
+
+
+
