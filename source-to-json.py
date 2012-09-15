@@ -128,3 +128,8 @@ for line in read_lines():
 
 print zones
 print rules
+
+# FIXME: TO BE WRITTEN
+# See the stringzone (and stringrule) functions in zic.c in the tzcode
+# distribution, noting the cases that stringzone generates the empty
+# string.
