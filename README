@@ -14,8 +14,9 @@
 This is tz.js, a library for working with time zones from JavaScript.
 
 It incorporates data from the tz database (also known as the Olson
-database), available at http://www.twinsun.com/tz/tz-link.htm and in
-the public domain.
+database), available at http://www.iana.org/time-zones (with the
+unofficial repository at https://github.com/eggert/tz ) and in the
+public domain.
 
 Files currently in the distribution are:
 
@@ -48,12 +49,12 @@ A few notes about the goals of this library:
 This library intentionally does not support times prior to 1970.  This
 is because the timezone database does not split zones if there were
 differences within them prior to 1970, as described in
-http://www.twinsun.com/tz/tz-link.htm .  This means that while the
-information from the zone data is intended to be valid for the reference
-city prior to 1970, it is often not valid throughout the zone.
-Therefore data from the tz database about transitions prior to 1970 have
-been removed to save space, and times prior to 1970 are intentionally
-rejected.
+http://www.iana.org/time-zones/repository/tz-link.html .  This means
+that while the information from the zone data is intended to be valid
+for the reference city prior to 1970, it is often not valid throughout
+the zone.  Therefore data from the tz database about transitions prior
+to 1970 have been removed to save space, and times prior to 1970 are
+intentionally rejected.
 
 
 Build instructions:
