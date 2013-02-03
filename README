@@ -47,8 +47,9 @@ Files currently in the distribution are:
 A few notes about the goals of this library:
 
 This library intentionally does not support times prior to 1970.  This
-is because the timezone database does not split zones if there were
-differences within them prior to 1970, as described in
+is both because it is unlikely to be useful, and because the timezone
+database does not split zones if there were differences within them
+prior to 1970, as described in
 http://www.iana.org/time-zones/repository/tz-link.html .  This means
 that while the information from the zone data is intended to be valid
 for the reference city prior to 1970, it is often not valid throughout
