@@ -76,5 +76,7 @@ Build instructions:
   AddEncoding x-gzip gz
 </FilesMatch>
 
-
-
+  * The output will need to be regenerated from new versions of the
+    Time Zone Database in order to continue having correct time zone
+    data.  New versions tend to come out about 10-20 times per year.
+    See http://www.iana.org/time-zones .
