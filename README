@@ -44,6 +44,9 @@ Files currently in the distribution are:
 
     The source to tz.js, to be compiled using build.py.
 
+    The JavaScript API that this library provides is documented at the
+    end of this file.
+
 A few notes about the goals of this library:
 
 This library intentionally does not support times prior to 1970.  This
