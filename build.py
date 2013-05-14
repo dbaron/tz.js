@@ -20,7 +20,7 @@ import gzip
 import imp
 import re
 
-INPUT_DIR = os.path.dirname(__file__)
+INPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
 
 if not os.path.exists(OUTPUT_DIR):
