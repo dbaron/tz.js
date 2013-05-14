@@ -56,12 +56,19 @@ if version_proc.returncode == 0:
         url = "https://github.com/" + m.groups()[0]
         version = "{0} {1}".format(url, version)
 
-version_proc = subprocess.Popen(["dpkg-query", "--show",
-                                  "--showformat=${Version}\n", "tzdata"],
-                                  stdout=subprocess.PIPE)
-tzdata_version = version_proc.stdout.read()
-version_proc.stdout.close()
-tzdata_version = tzdata_version.partition("-")[0]
+paths = os.environ['PATH'].split(os.pathsep)
+tzselect_paths = [os.path.join(p, 'tzselect') for p in paths]
+tzselect = None
+for path in tzselect_paths:
+    if os.path.exists(path):
+        tzselect = path
+        break
+
+with open(tzselect) as f:
+    for ln in f:
+        if ln.startswith('TZVERSION'):
+            tzdata_version = ln.strip().split('=')[1]
+            break
 
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
