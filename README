@@ -34,6 +34,11 @@ Files currently in the distribution are:
     tzfile(5), available in the tzcode* file in the tz database) into
     JSON suitable for use in tz.js.
 
+  get-latest-tz-release.py
+
+    A tool to download (into this source directory) the latest versions
+    of the tz database and print their names.
+
   source-to-json.py
 
     Work in progress on a tool to replace compiled-to-json.py (at some

@@ -1,2 +1,4 @@
 *.pyc
 /output/
+/tzcode*.tar.gz
+/tzdata*.tar.gz
