@@ -66,7 +66,7 @@ tzdata_version = tzdata_version.partition("-")[0]
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
                                               "compiled-to-json.py"))
-tz_json = tz_json_module.json_zones()
+tz_json = tz_json_module.json_zones("/usr/share/zoneinfo/")
 
 tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
@@ -90,5 +90,5 @@ if (not os.path.exists(test_output_file)) or \
    os.stat(test_input_file).st_mtime > os.stat(test_output_file).st_mtime:
     tz_tests_module = imp.load_source("tz_test_generator", test_input_file)
     tests_io = open(test_output_file, "wb")
-    tz_tests_module.output_tests(tests_io)
+    tz_tests_module.output_tests("/usr/share/zoneinfo", tests_io)
     tests_io.close()

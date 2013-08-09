@@ -20,18 +20,19 @@
 # into a JSON format suitable for inclusion in the tz.js JavaScript
 # library.
 
+from optparse import OptionParser
 import struct
 import json
+import os.path
 
 __all__ = [
     "generate_zones",
     "json_zones"
 ]
 
-SOURCE_PREFIX = "/usr/share/zoneinfo/"
 ZONE_TAB = "zone.tab"
 
-def read_zone(zone):
+def read_zone(source_prefix, zone):
     def read_fmt(io, fmt):
         s = struct.Struct(fmt)
         return s.unpack(io.read(s.size))
@@ -126,7 +127,7 @@ def read_zone(zone):
         return { "times": times, "ltidx": ltidx, "types": types,
                  "isstd": isstd, "isgmt": isgmt }
 
-    io = open(SOURCE_PREFIX + zone, "rb")
+    io = open(os.path.join(source_prefix, zone), "rb")
     # We expect version "2" of the TZif file, which has the data twice,
     # first with 4-byte time_t and then again with 8-byte time_t.  Throw
     # out the first half and use the second.  See tzfile(5) (which is
@@ -145,8 +146,8 @@ def read_zone(zone):
 
     return j
 
-def generate_zones():
-    tab = open(SOURCE_PREFIX + ZONE_TAB, "r")
+def generate_zones(source_prefix):
+    tab = open(os.path.join(source_prefix, ZONE_TAB), "r")
     for line in tab:
         line = line.rstrip("\n")
         line = line.partition("#")[0]
@@ -159,9 +160,16 @@ def generate_zones():
     # Also generate "Etc/UTC" in addition to the geographic zones.
     yield "Etc/UTC"
 
-def json_zones():
-    zones = {zone:read_zone(zone) for zone in generate_zones()}
+def json_zones(source_prefix):
+    zones = { zone:read_zone(source_prefix, zone)
+              for zone in generate_zones(source_prefix) }
     return json.dumps(zones, sort_keys=True)
 
 if __name__ == '__main__':
-    print json_zones()
+    op = OptionParser()
+    (options, args) = op.parse_args()
+
+    if len(args) == 1:
+        print json_zones(args[0])
+    else:
+        op.error("expected one argument (tzdata directory, e.g., /usr/share/zoneinfo)")
