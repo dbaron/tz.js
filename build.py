@@ -19,6 +19,8 @@ import subprocess
 import gzip
 import imp
 import re
+import shutil
+import tempfile
 
 INPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
@@ -56,24 +58,32 @@ if version_proc.returncode == 0:
         url = "https://github.com/" + m.groups()[0]
         version = "{0} {1}".format(url, version)
 
-version_proc = subprocess.Popen(["dpkg-query", "--show",
-                                  "--showformat=${Version}\n", "tzdata"],
-                                  stdout=subprocess.PIPE)
-tzdata_version = version_proc.stdout.read()
-version_proc.stdout.close()
-tzdata_version = tzdata_version.partition("-")[0]
+get_tz_module = imp.load_source("get_tz",
+                                os.path.join(INPUT_DIR,
+                                             "get-latest-tz-release.py"))
+tzversions = get_tz_module.get_latest_tz_release()
 
+tztempdir = tempfile.mkdtemp()
+
+build_tz_module = imp.load_source("build_tz",
+                                  os.path.join(INPUT_DIR,
+                                               "build-tz.py"))
+build_tz_module.build_tz(tztempdir,
+                         "tzcode" + tzversions["tzcode"] + ".tar.gz",
+                         "tzdata" + tzversions["tzdata"] + ".tar.gz")
+
+zoneinfo_dir = os.path.join(tztempdir, "output", "etc", "zoneinfo")
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
                                               "compiled-to-json.py"))
-tz_json = tz_json_module.json_zones("/usr/share/zoneinfo/")
+tz_json = tz_json_module.json_zones(zoneinfo_dir)
 
 tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
-tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzdata_version)
+tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
 tz_js_source = tz_js_source.replace("@@ZONES@@", tz_json)
 
 tz_js_gz = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
@@ -90,5 +100,7 @@ if (not os.path.exists(test_output_file)) or \
    os.stat(test_input_file).st_mtime > os.stat(test_output_file).st_mtime:
     tz_tests_module = imp.load_source("tz_test_generator", test_input_file)
     tests_io = open(test_output_file, "wb")
-    tz_tests_module.output_tests("/usr/share/zoneinfo", tests_io)
+    tz_tests_module.output_tests(zoneinfo_dir, tests_io)
     tests_io.close()
+
+shutil.rmtree(tztempdir)

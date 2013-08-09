@@ -72,11 +72,11 @@ intentionally rejected.
 
 Build instructions:
 
-  * You need to build on a Unix-ish system (I use Ubuntu Linux; Mac OS
-    X probably also works) or you need a copy of the timezone data that
-    typically comes with one.
+  * You probably need to build on a Unix-ish system (I use Ubuntu Linux;
+    Mac OS X probably also works).
 
-  * You may need to adjust the paths at the top of compiled-to-json.py.
+  * Note that the build process retrieves the latest version of the
+    timezone database over the network.
 
   * Run build.py, and the output appears in the output/ subdirectory.
 
