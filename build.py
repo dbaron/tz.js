@@ -73,6 +73,8 @@ build_tz_module.build_tz(tztempdir,
                          "tzdata" + tzversions["tzdata"] + ".tar.gz")
 
 zoneinfo_dir = os.path.join(tztempdir, "output", "etc", "zoneinfo")
+zdump_command = os.path.join(tztempdir, "output", "etc", "zdump")
+
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
                                               "compiled-to-json.py"))
@@ -100,7 +102,7 @@ if (not os.path.exists(test_output_file)) or \
    os.stat(test_input_file).st_mtime > os.stat(test_output_file).st_mtime:
     tz_tests_module = imp.load_source("tz_test_generator", test_input_file)
     tests_io = open(test_output_file, "wb")
-    tz_tests_module.output_tests(zoneinfo_dir, tests_io)
+    tz_tests_module.output_tests(zoneinfo_dir, zdump_command, tests_io)
     tests_io.close()
 
 shutil.rmtree(tztempdir)

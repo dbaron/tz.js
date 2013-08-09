@@ -43,7 +43,7 @@ generate_zones = imp.load_source("compiled_to_json",
                                               "compiled-to-json.py")
                                  ).generate_zones
 
-def output_tests(source_prefix, io):
+def output_tests(source_prefix, zdump_command, io):
     all_zones = list(generate_zones(source_prefix))
 
     io.write("""<!DOCTYPE HTML>
@@ -124,7 +124,7 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
                                          '--date=' + write_expected(time),
                                          '+%Z %::z'],
                                         stdout = subprocess.PIPE,
-                                        env={"TZ": zone})
+                                        env={"TZ": os.path.join(source_prefix, zone)})
         result = read_expected(date_process)
         date_process.stdout.close()
         return result
@@ -135,13 +135,15 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
  */
 """)
 
-    date_process = subprocess.Popen(['date', '--date=' + str(STOP_YEAR) +
+    date_process = subprocess.Popen(['date',
+                                     '--date=' + str(STOP_YEAR) +
                                      '-01-01 00:00:00 UTC', '+%s'],
                                     stdout = subprocess.PIPE)
     stop_d = int(date_process.stdout.read().rstrip("\n"))
     date_process.stdout.close()
     def zdump_for(zone):
-        zdump = subprocess.Popen(['zdump', '-v', '-c', str(STOP_YEAR), zone],
+        zdump = subprocess.Popen([zdump_command,
+                                  '-v', '-c', str(STOP_YEAR), zone],
                                  stdout=subprocess.PIPE)
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
         for line in zdump.stdout:
@@ -158,7 +160,8 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
         for (date_utc, date_loc, isdst, utcoff) in zdump:
             datefile.write(date_utc + "\n")
     datefile.close()
-    date_process = subprocess.Popen(['date', '--file=' + datefile.name, '+%s'],
+    date_process = subprocess.Popen(['date',
+                                     '--file=' + datefile.name, '+%s'],
                                     stdout = subprocess.PIPE)
     for (zone, zdump) in zdumps:
         def output_test(d, utcoff, abbr):
@@ -228,10 +231,11 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
         for time in random_times:
             datefile.write(write_expected(time) + "\n")
         datefile.close()
-        date_process = subprocess.Popen(['date', '--file=' + datefile.name,
+        date_process = subprocess.Popen(['date',
+                                         '--file=' + datefile.name,
                                          '+%Z %::z'],
                                         stdout = subprocess.PIPE,
-                                        env={"TZ": zone})
+                                        env={"TZ": os.path.join(source_prefix, zone)})
         for time in random_times:
             (utcoff, abbr) = read_expected(date_process)
             output_check_offset(zone, time, utcoff, abbr)
@@ -267,7 +271,7 @@ if __name__ == '__main__':
     op = OptionParser()
     (options, args) = op.parse_args()
 
-    if len(args) == 1:
-        output_tests(args[0], sys.stdout)
+    if len(args) == 2:
+        output_tests(args[0], args[1], sys.stdout)
     else:
-        op.error("expected one argument (tzdata directory, e.g., /usr/share/zoneinfo)")
+        op.error("expected three arguments (zoneinfo directory, zdump command)")

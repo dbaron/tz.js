@@ -73,7 +73,9 @@ intentionally rejected.
 Build instructions:
 
   * You probably need to build on a Unix-ish system (I use Ubuntu Linux;
-    Mac OS X probably also works).
+    Mac OS X probably also works).  (For building the tests correctly, a
+    'date' command that deals with a TZ environment variable containing
+    file paths is required.)
 
   * Note that the build process retrieves the latest version of the
     timezone database over the network.
