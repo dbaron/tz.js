@@ -20,6 +20,10 @@ import os.path
 import os
 import subprocess
 
+__all__ = [
+    "build_tz"
+]
+
 def build_tz(destdir, tzcodetar, tzdatatar):
     destdir = os.path.abspath(destdir)
     tzcodetar = os.path.abspath(tzcodetar)
