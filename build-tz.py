@@ -20,28 +20,33 @@ import os.path
 import os
 import subprocess
 
-op = OptionParser()
-(options, args) = op.parse_args()
+def build_tz(destdir, tzcodetar, tzdatatar):
+    destdir = os.path.abspath(destdir)
+    tzcodetar = os.path.abspath(tzcodetar)
+    tzdatatar = os.path.abspath(tzdatatar)
 
-if len(args) == 3:
-    destdir = os.path.abspath(args[0])
-    tzcodetar = os.path.abspath(args[1])
-    tzdatatar = os.path.abspath(args[2])
-else:
-    op.error("expected three arguments (dest directory, tzcode archive, tzdata archive)")
+    if not os.path.isdir(destdir):
+        raise StandardError("destination not a directory")
+    sourcedir = os.path.join(destdir, "source")
+    outputdir = os.path.join(destdir, "output")
+    if os.path.exists(sourcedir) or os.path.exists(outputdir):
+        raise StandardError("destination already exists")
 
-if not os.path.isdir(destdir):
-    raise StandardError("destination not a directory")
-sourcedir = os.path.join(destdir, "source")
-outputdir = os.path.join(destdir, "output")
-if os.path.exists(sourcedir) or os.path.exists(outputdir):
-    raise StandardError("destination already exists")
+    os.mkdir(sourcedir)
+    os.mkdir(outputdir)
 
-os.mkdir(sourcedir)
-os.mkdir(outputdir)
+    subprocess.check_call(["tar", "xzf", tzcodetar],
+                          cwd=sourcedir)
+    subprocess.check_call(["tar", "xzf", tzdatatar],
+                          cwd=sourcedir)
+    subprocess.check_call(["make", "INSTALL", "TOPDIR=" + outputdir],
+                          cwd=sourcedir)
 
-os.chdir(sourcedir)
+if __name__ == '__main__':
+    op = OptionParser()
+    (options, args) = op.parse_args()
 
-subprocess.check_call(["tar", "xzf", tzcodetar])
-subprocess.check_call(["tar", "xzf", tzdatatar])
-subprocess.check_call(["make", "INSTALL", "TOPDIR=" + outputdir])
+    if len(args) == 3:
+        build_tz(args[0], args[1], args[2])
+    else:
+        op.error("expected three arguments (dest directory, tzcode archive, tzdata archive)")
