@@ -20,64 +20,64 @@ import os.path
 from ftplib import FTP
 import sys
 
+__all__ = [
+    "get_latest_tz_release"
+]
+
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-current_tzcode = None
-current_tzdata = None
-LATEST_LINK_STRING = "-latest.tar.gz -> "
-RELEASES_STRING = "releases/"
-def dir_callback(line):
-    index = line.find(LATEST_LINK_STRING)
-    if index == -1 or index < 7 or line[index-7] != " ":
-        return
-    which = line[ index - 6 : index ]
-    if which != "tzdata" and which != "tzcode":
-        return
-    dest = line[ index + len(LATEST_LINK_STRING) : ]
-    if not dest.startswith(RELEASES_STRING):
-        raise StandardError("unexpected file path: no releases/")
-    dest = dest[ len(RELEASES_STRING) : ]
-    current_is(which, dest)
+def get_latest_tz_release():
+    current = {}
+    LATEST_LINK_STRING = "-latest.tar.gz -> "
+    RELEASES_STRING = "releases/"
+    def dir_callback(line):
+        index = line.find(LATEST_LINK_STRING)
+        if index == -1 or index < 7 or line[index-7] != " ":
+            return
+        which = line[ index - 6 : index ]
+        if which != "tzdata" and which != "tzcode":
+            return
+        dest = line[ index + len(LATEST_LINK_STRING) : ]
+        if not dest.startswith(RELEASES_STRING):
+            raise StandardError("unexpected file path: no releases/")
+        dest = dest[ len(RELEASES_STRING) : ]
+        current_is(which, dest)
 
-FILE_SUFFIX = ".tar.gz"
-def current_is(which, dest):
-    global current_tzcode, current_tzdata
-    if not dest.startswith(which):
-        raise StandardError("unexpected filename start")
-    if not dest.endswith(FILE_SUFFIX):
-        raise StandardError("unexpected filename end")
-    version = dest[ len(which) : len(dest)-len(FILE_SUFFIX) ]
-    if which == "tzcode":
-        if current_tzcode is not None:
-            raise StandardError("already have current tzcode")
-        current_tzcode = version
-    elif which == "tzdata":
-        if current_tzdata is not None:
-            raise StandardError("already have current tzdata")
-        current_tzdata = version
-    else:
-        raise StandardError("unexpected argument")
+    FILE_SUFFIX = ".tar.gz"
+    def current_is(which, dest):
+        if not dest.startswith(which):
+            raise StandardError("unexpected filename start")
+        if not dest.endswith(FILE_SUFFIX):
+            raise StandardError("unexpected filename end")
+        version = dest[ len(which) : len(dest)-len(FILE_SUFFIX) ]
+        if which in current:
+            raise StandardError("already have current tz" + which)
+        current[which] = version
 
-def check_download_file(name):
-    destfile = os.path.join(SOURCE_DIR, name)
-    tmpfile = os.path.join(SOURCE_DIR, name + ".part")
-    if os.path.exists(destfile):
-        return
-    sys.stderr.write("Downloading " + name + "\n")
-    io = open(tmpfile, 'wb')
-    ftp.retrbinary("RETR " + name, io.write)
-    io.close()
-    os.rename(tmpfile, destfile)
+    def check_download_file(name):
+        destfile = os.path.join(SOURCE_DIR, name)
+        tmpfile = os.path.join(SOURCE_DIR, name + ".part")
+        if os.path.exists(destfile):
+            return
+        sys.stderr.write("Downloading " + name + "\n")
+        io = open(tmpfile, 'wb')
+        ftp.retrbinary("RETR " + name, io.write)
+        io.close()
+        os.rename(tmpfile, destfile)
 
-ftp = FTP("ftp.iana.org")
-ftp.login("anonymous", os.path.basename(__file__))
-ftp.cwd("tz")
-ftp.dir(dir_callback)
-if current_tzcode is None or current_tzdata is None:
-    raise StandardError("didn't find current versions")
-ftp.cwd("releases")
-check_download_file("tzcode" + current_tzcode + FILE_SUFFIX)
-check_download_file("tzdata" + current_tzdata + FILE_SUFFIX)
-ftp.quit()
+    ftp = FTP("ftp.iana.org")
+    ftp.login("anonymous", os.path.basename(__file__))
+    ftp.cwd("tz")
+    ftp.dir(dir_callback)
+    if current["tzcode"] is None or current["tzdata"] is None:
+        raise StandardError("didn't find current versions")
+    ftp.cwd("releases")
+    check_download_file("tzcode" + current["tzcode"] + FILE_SUFFIX)
+    check_download_file("tzdata" + current["tzdata"] + FILE_SUFFIX)
+    ftp.quit()
 
-print "{0} {1}".format(current_tzcode, current_tzdata)
+    return current
+
+if __name__ == '__main__':
+    current = get_latest_tz_release()
+    print "{0} {1}".format(current["tzcode"], current["tzdata"])
