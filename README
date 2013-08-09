@@ -28,6 +28,10 @@ Files currently in the distribution are:
 
     Python script to produce the test output (invoked by build.py).
 
+  build-tz.py
+
+    Python script to build the tz database.
+
   compiled-to-json.py
 
     A working tool for converting the binary timezone data format (see
