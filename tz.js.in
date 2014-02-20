@@ -28,7 +28,7 @@
 
     var g_rule_main_re = /^([^\d:,+-]+)([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?(.*)/;
     var g_rule_dst_re = /^([^\d:,+-]+)(([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?,([^,]*),([^,]*)$/;
-    var g_start_end_re = /^([^\/]+)(\/([+-]\d{1,3})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
+    var g_start_end_re = /^([^\/]+)(\/([+-]?\d{1,3})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
     var g_mwd_re = /^M(\d+)\.(\d+)\.(\d+)$/;
     var numorz = function(str_or_undefined) {
         if (typeof(str_or_undefined) == "undefined") {
