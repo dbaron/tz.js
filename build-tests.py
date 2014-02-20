@@ -202,6 +202,9 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
  * but uses a fixed random seed to always get the same set of tests.
  * See http://en.wikipedia.org/wiki/Linear_congruential_generator (using
  * the numbers from Numerical Recipes).
+ *
+ * And while we're here, toss in some tests for midnight boundaries
+ * around the new year.
  */
 """)
     def lc_prng(): # a generator
@@ -220,15 +223,21 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
         time = time % STOP_SECS
         time = math.floor(time * 1000) / 1000
         return time
-    # For each time zone, we make 100 random tests.  Do each zone
-    # together so that we can easily use a single date process for each
-    # zone.
+    def midnight_rule_time(i):
+        # return 2049-12-31 00:30 UTC + i hours
+        return 2524523400 + 3600 * i
+    # For each time zone, we make 100 random tests, and some additional
+    # tests.  Do each zone together so that we can easily use a single
+    # date process for each zone.
     for zone in all_zones:
-        random_times = [random_time() for i in range(100)]
+        # 100 random tests, then specifically test 48 hours around new
+        # years 2050 to test rule edge cases
+        test_times = [random_time() for i in range(100)] + \
+                     [midnight_rule_time(i) for i in range(48)]
         # Write all the dates to one file and run them through a single
         # date process, for speed.
         datefile = tempfile.NamedTemporaryFile(delete=False)
-        for time in random_times:
+        for time in test_times:
             datefile.write(write_expected(time) + "\n")
         datefile.close()
         date_process = subprocess.Popen(['date',
@@ -236,7 +245,7 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
                                          '+%Z %::z'],
                                         stdout = subprocess.PIPE,
                                         env={"TZ": os.path.join(source_prefix, zone)})
-        for time in random_times:
+        for time in test_times:
             (utcoff, abbr) = read_expected(date_process)
             output_check_offset(zone, time, utcoff, abbr)
         date_process.stdout.close()
