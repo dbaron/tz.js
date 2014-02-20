@@ -28,7 +28,7 @@
 
     var g_rule_main_re = /^([^\d:,+-]+)([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?(.*)/;
     var g_rule_dst_re = /^([^\d:,+-]+)(([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?,([^,]*),([^,]*)$/;
-    var g_start_end_re = /^([^\/]+)(\/(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
+    var g_start_end_re = /^([^\/]+)(\/([+-]\d{1,3})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
     var g_mwd_re = /^M(\d+)\.(\d+)\.(\d+)$/;
     var numorz = function(str_or_undefined) {
         if (typeof(str_or_undefined) == "undefined") {
@@ -76,6 +76,8 @@
     }
     var zone_pair_from_rule = function(rule, d) {
         // See http://www.gnu.org/s/hello/manual/libc/TZ-Variable.html
+        // and the extensions documented in the man page for tzfile(5)
+        // in the time zone database distribution.
         var m = rule.match(g_rule_main_re);
         var abbr = m[1];
         // In POSIX TZ format, UTC offsets are backwards.
@@ -94,11 +96,18 @@
                     (3600 * Number(m[4]) + 60 * numorz(m[6]) + numorz(m[8])) *
                     ((m[3] == "-") ? 1 : -1);
             }
-            // Arbitrarily pick one of offset and dst_offset to pick the
-            // year on the assumption nobody changes summer time at the
-            // new year.  (We do need to be consistent because we need the
-            // same year for both computations; otherwise can pick start
-            // and end in different years and get DST wrong.)
+            // As of version three of the timezone file format, the
+            // rules allow an extension in which daylight savings time
+            // may be indicated as being present all year, by use of a
+            // transition to daylight savings time at midnight local
+            // time on January 1, and a transition off of it at 25:00
+            // local time on December 31.  This means as long as we use
+            // one of offset and dst_offset to pick the year to use,
+            // even if it's wrong (as it is in the last hour of the year
+            // in such cases), we'll still get the correct result.  (We
+            // do need to be consistent because we need the same year
+            // for both computations; otherwise can pick start and end
+            // in different years and get DST wrong.)
             var year = (new Date((d + offset) * 1000)).getUTCFullYear();
             var start = compute_rule_boundary(year, m[9], offset);
             var end = compute_rule_boundary(year, m[10], dst_offset);

@@ -42,7 +42,7 @@ def read_zone(source_prefix, zone):
         if read_fmt(io, "!cccc") != ("T", "Z", "i", "f"):
             raise StandardError("invalid TZ file (TZif header)")
         version = read_fmt(io, "!c")
-        if version != ("2",):
+        if version != ("2",) and version != ("3",):
             raise StandardError("unexpected file version")
         io.read(15)
         (ttisgmtcnt, ttisstdcnt, leapcnt, timecnt, typecnt, charcnt) = \
