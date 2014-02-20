@@ -240,6 +240,11 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
         for time in test_times:
             datefile.write(write_expected(time) + "\n")
         datefile.close()
+        # FIXME: This is using the system's date command, which might
+        # not be compatible with the timezone data it's being given.
+        # (For example, if you have a system date command that doesn't
+        # understand version 3 timezone file formats, you'll fail some
+        # post-2038 tests for America/Godthab.)
         date_process = subprocess.Popen(['date',
                                          '--file=' + datefile.name,
                                          '+%Z %::z'],
