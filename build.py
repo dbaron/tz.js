@@ -80,12 +80,19 @@ tz_json_module = imp.load_source("compiled_to_json",
                                               "compiled-to-json.py"))
 tz_json = tz_json_module.json_zones(zoneinfo_dir)
 
+source_dir = os.path.join(tztempdir, "source")
+link_json_module = imp.load_source("links_to_json",
+                                   os.path.join(INPUT_DIR,
+                                                "links-to-json.py"))
+link_json = link_json_module.json_zones(os.path.join(source_dir, "backward"))
+
 tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
+tz_js_source = tz_js_source.replace("@@LINKS@@", link_json)
 tz_js_source = tz_js_source.replace("@@ZONES@@", tz_json)
 
 tz_js_gz = gzip.open(os.path.join(OUTPUT_DIR, "tz.js.gz"), "wb")
