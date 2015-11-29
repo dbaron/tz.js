@@ -21,6 +21,7 @@ import imp
 import re
 import shutil
 import tempfile
+import json
 
 INPUT_DIR = os.path.dirname(os.path.abspath(__file__))
 OUTPUT_DIR = os.path.join(INPUT_DIR, "output")
@@ -90,9 +91,14 @@ tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
-# FIXME: Most Links are included in zone.tab (though some are not).
-# Maybe the links should be deleted from the primary data to reduce its
-# size?
+# Most Links are included in zone.tab (though some are not).  So let's
+# delete them from the JSON.  (It saves about 10% uncompressed size of
+# tz.js, although only 5% compressed.)
+tzs = json.loads(tz_json)
+for zone in json.loads(link_json):
+    if zone in tzs:
+        del tzs[zone]
+tz_json = json.dumps(tzs, sort_keys=True)
 
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
