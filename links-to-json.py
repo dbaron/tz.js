@@ -32,11 +32,11 @@ files_with_links = [
     "asia",
     "australasia",
     "backward",
+    # "backzone" # backzone is not used to generate /usr/share/zoneinfo
     "etcetera",
     "europe",
     "northamerica",
-    "southamerica",
-    "backzone" # should be last (see exception below)
+    "southamerica"
 ]
 
 def json_zones(source_dir):
@@ -58,7 +58,7 @@ def json_zones(source_dir):
                 raise StandardError("malformed link file {0}: {1} whitespace-delimited words on line {2}".format(filename, len(words), line))
             dest = words[1]
             source = words[2]
-            if source in links and filename != "backzone":
+            if source in links:
                 raise StandardError("malformed link file {0}: duplicate link {1}".format(filename, source))
             links[source] = dest
         io.close()

@@ -90,6 +90,10 @@ tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
 tz_js_in.close()
 
+# FIXME: Most Links are included in zone.tab (though some are not).
+# Maybe the links should be deleted from the primary data to reduce its
+# size?
+
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
 tz_js_source = tz_js_source.replace("@@LINKS@@", link_json)
