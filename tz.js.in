@@ -137,7 +137,11 @@
     }
 
     var public_zoneAt = function(zone, dateObj) {
-        var zi = gZones[zone]; // caller required to provide valid zone
+        var czone = public_canonicalName(zone);
+        if (!czone) {
+            throw "Invalid time zone name: " + zone;
+        }
+        var zi = gZones[czone];
         var d = dateObj.valueOf() / 1000;
 
         if (d < 0) {
