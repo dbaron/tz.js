@@ -198,6 +198,10 @@
         return gAllZones;
     }
 
+    var public_links = function() {
+        return gLinks;
+    }
+
     // Exports:
     window.tz = {
         /**
@@ -269,6 +273,12 @@
          * alphabetical order.  The same array will be returned from
          * each call.
          */
-        allZones: public_allZones
+        allZones: public_allZones,
+
+        /**
+         * Return a hash mapping all backward zone names (links,
+         * aliases) to their canonical zone names.
+         */
+        links: public_links
     };
 })();
