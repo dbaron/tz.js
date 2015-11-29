@@ -276,8 +276,8 @@
         allZones: public_allZones,
 
         /**
-         * Return a hash mapping all backward zone names (links,
-         * aliases) to their canonical zone names.
+         * Return a hash mapping all aliased zone names (links) to their
+         * canonical zone names.
          */
         links: public_links
     };

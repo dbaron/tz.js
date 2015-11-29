@@ -20,28 +20,48 @@
 from optparse import OptionParser
 import json
 import re
+import os.path
 
 __all__ = [
     "json_zones"
 ]
 
-def json_zones(backward_file):
-    tabs_re = re.compile("\t+")
+files_with_links = [
+    "africa",
+    "antarctica",
+    "asia",
+    "australasia",
+    "backward",
+    "etcetera",
+    "europe",
+    "northamerica",
+    "southamerica",
+    "backzone" # should be last (see exception below)
+]
+
+def json_zones(source_dir):
+    ws_re = re.compile("[ \t]+")
 
     links = {}
-    io = open(backward_file, "r")
-    for line in io:
-        if not line.startswith("Link\t"):
-            continue
-        words = tabs_re.split(line)
-        if len(words) != 3:
-            raise StandardError("malformed backward file: {0} tab-delimited words".format(len(words)))
-        dest = words[1]
-        source = words[2].rstrip("\r\n")
-        if source in links:
-            raise StandardError("malformed backward file: duplicate link {0}".format(source))
-        links[source] = dest
-    io.close()
+
+    for filename in files_with_links:
+        io = open(os.path.join(source_dir, filename), "r")
+        for line in io:
+            if not line.startswith("Link"):
+                continue
+            line = line.split("#")[0] # remove comments
+            line = line.rstrip(" \t\r\n")
+            words = ws_re.split(line)
+            if words[0] != "Link":
+                raise StandardError("malformed link file {0}: Found link-like line {1}".format(filename, line))
+            if len(words) != 3:
+                raise StandardError("malformed link file {0}: {1} whitespace-delimited words on line {2}".format(filename, len(words), line))
+            dest = words[1]
+            source = words[2]
+            if source in links and filename != "backzone":
+                raise StandardError("malformed link file {0}: duplicate link {1}".format(filename, source))
+            links[source] = dest
+        io.close()
     return json.dumps(links, sort_keys=True)
 
 if __name__ == '__main__':
@@ -51,4 +71,4 @@ if __name__ == '__main__':
     if len(args) == 1:
         print json_zones(args[0])
     else:
-        op.error("expected one argument (backward file from tzdata source)")
+        op.error("expected one argument (directory of tzdata source)")

@@ -84,7 +84,7 @@ source_dir = os.path.join(tztempdir, "source")
 link_json_module = imp.load_source("links_to_json",
                                    os.path.join(INPUT_DIR,
                                                 "links-to-json.py"))
-link_json = link_json_module.json_zones(os.path.join(source_dir, "backward"))
+link_json = link_json_module.json_zones(source_dir)
 
 tz_js_in = open(os.path.join(INPUT_DIR, "tz.js.in"), "rb")
 tz_js_source = tz_js_in.read()
