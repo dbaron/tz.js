@@ -27,8 +27,8 @@
     var gSecsPerDay = 86400;
     var gSecsPerWeek = 604800;
 
-    var g_rule_main_re = /^([^\d:,+-]+)([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?(.*)/;
-    var g_rule_dst_re = /^([^\d:,+-]+)(([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?,([^,]*),([^,]*)$/;
+    var g_rule_main_re = /^((?:<[^<>]+>)|(?:[^\d:,+-]+))([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?(.*)/;
+    var g_rule_dst_re = /^((?:<[^<>]+>)|(?:[^\d:,+-]+))(([+-])?(\d{1,2})(:(\d{1,2})(:(\d{1,2}))?)?)?,([^,]*),([^,]*)$/;
     var g_start_end_re = /^([^\/]+)(\/([+-]?\d{1,3})(:(\d{1,2})(:(\d{1,2}))?)?)?$/;
     var g_mwd_re = /^M(\d+)\.(\d+)\.(\d+)$/;
     var numorz = function(str_or_undefined) {
@@ -117,6 +117,10 @@
                 abbr = dst_abbr;
                 offset = dst_offset;
             }
+        }
+        if (abbr[0] == "<" && abbr[abbr.length-1] == ">") {
+            // Trim the < and >
+            abbr = abbr.slice(1, -1);
         }
         return { offset: offset, abbr: abbr };
     }
