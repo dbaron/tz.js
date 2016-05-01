@@ -119,7 +119,8 @@
             }
         }
         if (abbr[0] == "<" && abbr[abbr.length-1] == ">") {
-            // Trim the < and >
+            // Trim the < and >, since they are not present for the
+            // non-rule case.
             abbr = abbr.slice(1, -1);
         }
         return { offset: offset, abbr: abbr };
