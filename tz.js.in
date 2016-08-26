@@ -242,8 +242,8 @@
         /**
          * datesFor(zone, year, month, day, hour, minute, second)
          *   Given a valid named time zone and a local time with:
-         *     year >= 1970 (but not on January 1)
-         *     month 1-12
+         *     year >= 1970 (but not on January 1, 1970)
+         *     month 1-12 (different from JS months, which are 0-11!)
          *     day 1-31
          *     hour 0-23
          *     minute 0-59
