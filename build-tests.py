@@ -135,6 +135,8 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
  */
 """)
 
+    sys.stderr.write("Preparing to build transition tests.\n")
+
     date_process = subprocess.Popen(['date',
                                      '--date=' + str(STOP_YEAR) +
                                      '-01-01 00:00:00 UTC', '+%s'],
@@ -163,7 +165,11 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
     date_process = subprocess.Popen(['date',
                                      '--file=' + datefile.name, '+%s'],
                                     stdout = subprocess.PIPE)
+    prev_zone = None
     for (zone, zdump) in zdumps:
+        if zone != prev_zone:
+            prev_zone = zone
+            sys.stderr.write("Building transition tests for zone " + zone + "\n")
         def output_test(d, utcoff, abbr):
             output_check_offset(zone, d, utcoff, abbr)
         first = True
@@ -230,6 +236,7 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
     # tests.  Do each zone together so that we can easily use a single
     # date process for each zone.
     for zone in all_zones:
+        sys.stderr.write("Building tests for zone " + zone + "\n")
         # 100 random tests, then specifically test 48 hours around new
         # years 2050 to test rule edge cases
         test_times = [random_time() for i in range(100)] + \
