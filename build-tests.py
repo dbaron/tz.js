@@ -32,6 +32,7 @@ __all__ = [
     "output_tests"
 ]
 
+START_YEAR = 1970
 STOP_YEAR = 2050
 STOP_SECS = 2524608000 # 2050, in seconds since the epoch
 
@@ -145,7 +146,9 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
     date_process.stdout.close()
     def zdump_for(zone):
         zdump = subprocess.Popen([zdump_command,
-                                  '-v', '-c', str(STOP_YEAR), zone],
+                                  '-v',
+                                  '-c', str(START_YEAR) + "," + str(STOP_YEAR),
+                                  zone],
                                  stdout=subprocess.PIPE)
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
         for line in zdump.stdout:
