@@ -67,11 +67,11 @@
             // This means 59 is Feb 28, 60 is Mar 1.
             var n = Number(daystr.substr(1));
             var j = n - 1 + (n > 59 && is_leap(year));
-            d = Date.UTC(year, 0) + j * gSecsPerDay;
+            d = Date.UTC(year, 0) / 1000 + j * gSecsPerDay;
         } else {
             // Julian day, 0-365, counting Feb. 29 when leap year
             var j = Number(daystr);
-            d = Date.UTC(year, 0) + j * gSecsPerDay;
+            d = Date.UTC(year, 0) / 1000 + j * gSecsPerDay;
         }
         return d + time - utc_offset_before;
     }
