@@ -103,4 +103,4 @@ Further notes:
     database, the gzip-compressed tz.js is 54,285 bytes, which includes
     all of the necessary data from the tz database.
 
-  * The documentation of the actual JS API is in tz.js.in.
+  * The documentation of the actual JS API is at the end of tz.js.in.
