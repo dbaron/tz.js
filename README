@@ -54,7 +54,7 @@ Files currently in the distribution are:
     The source to tz.js, to be compiled using build.py.
 
     The JavaScript API that this library provides is documented at the
-    end of this file.
+    end of the tz.js.in file.
 
 A few notes about the goals of this library:
 
@@ -94,3 +94,13 @@ Build instructions:
     Time Zone Database in order to continue having correct time zone
     data.  New versions tend to come out about 10-20 times per year.
     See http://www.iana.org/time-zones .
+
+Further notes:
+
+  * The resulting tz.js (produced by build.py), or (preferably) its
+    compressed form tz.js.gz, is the only file you need to serve to
+    serve the library.  With the current (2016i) copy of the tz
+    database, the gzip-compressed tz.js is 54,285 bytes, which includes
+    all of the necessary data from the tz database.
+
+  * The documentation of the actual JS API is in tz.js.in.
