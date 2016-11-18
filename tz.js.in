@@ -222,10 +222,13 @@
     window.tz = {
         /**
          * zoneAt(zone, dateObj)
-         *   Given a valid named time zone and a JavaScript date object,
-         *   return a zone object with two properties:
+         *
+         * Given a valid named time zone (either a canonical zone name
+         * or an alias/link) and a JavaScript date object, return a zone
+         * object with two properties:
          *     offset: the UTC offset for the zone, in seconds
          *     abbr: the correct short name for the zone
+         *
          * For example,
          *   tz.zoneAt("America/Los_Angeles",
          *             new Date(Date.UTC(1976,6,4,18,0,0)))
@@ -241,7 +244,9 @@
 
         /**
          * datesFor(zone, year, month, day, hour, minute, second)
-         *   Given a valid named time zone and a local time with:
+         *
+         * Given a valid named time zone (either a canonical zone name
+         * or an alias/link) and a local time with:
          *     year >= 1970 (but not on January 1, 1970)
          *     month 1-12 (different from JS months, which are 0-11!)
          *     day 1-31
@@ -285,15 +290,22 @@
         datesFor: public_datesFor,
 
         /**
-         * Return an array listing all supported named time zones, in
-         * alphabetical order.  The same array will be returned from
-         * each call.
+         * Return an array listing all of the canonical supported named
+         * time zones, in alphabetical order.  The same array will be
+         * returned from each call.
+         *
+         * This is mainly useful if you want to enumerate all supported
+         * zones.
          */
         allZones: public_allZones,
 
         /**
          * Return a hash mapping all aliased zone names (links) to their
-         * canonical zone names.
+         * canonical zone names.  The same object will be returned from
+         * each call.
+         *
+         * You will probably find the canonicalName function below more
+         * useful.
          */
         links: public_links,
 
@@ -305,6 +317,23 @@
          * a zone *and* a link, the zone is preferred.
          *
          * Returns undefined if there is no canonical name.
+         *
+         * For example, tz.canonicalName("America/Los_Angeles") will
+         * return "America/Los_Angeles", since America/Los_Angeles is a
+         * canonical timezone name.  However,
+         * tz.canonicalName("US/Pacific") will also return
+         * "America/Los_Angeles" since US/Pacific is an alias for
+         * America/Los_Angeles.  Likewise,
+         * tz.canonicalName("Africa/Addis_Ababa") will return
+         * "Africa/Nairobi" since the tz database no longer follows the
+         * convention that there is one canonical name per country, and
+         * has therefore made Africa/Addis_Ababa an alias for
+         * Africa/Nairobi (since both have followed the same time zone
+         * rules since 1970).
+         *
+         * This is useful if you want to canonicalize the timezone
+         * names.  However, it is not required for use of tz.zoneAt or
+         * tz.datesFor.
          */
         canonicalName: public_canonicalName,
     };
