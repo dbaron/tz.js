@@ -167,7 +167,8 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
     datefile.close()
     date_process = subprocess.Popen(['date',
                                      '--file=' + datefile.name, '+%s'],
-                                    stdout = subprocess.PIPE)
+                                    stdout = subprocess.PIPE,
+                                    env={"TZ": "UTC"})
     prev_zone = None
     for (zone, zdump) in zdumps:
         if zone != prev_zone:
