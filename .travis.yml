@@ -1,0 +1,7 @@
+language: node_js # also works in browsers, but simpler to test in node
+node_js:
+  - "4"
+before_script:
+  - ./build.py
+script:
+  - node ./output/test-tz-node.js
