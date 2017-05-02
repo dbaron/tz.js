@@ -1,0 +1,13 @@
+<!DOCTYPE HTML>
+<title>tz.js tests</title>
+<script src="tz.js"></script>
+<pre id="output"></pre>
+<script>
+var output_node = document.createTextNode("");
+document.getElementById("output").appendChild(output_node);
+function print(s)
+{
+    output_node.appendData(s + "\n");
+}
+</script>
+<script src="test-tz.js"></script>

@@ -114,12 +114,15 @@ tz_js.write(tz_js_source)
 tz_js.close()
 
 test_input_file = os.path.join(INPUT_DIR, "build-tests.py")
-test_output_file = os.path.join(OUTPUT_DIR, "test-tz.html")
+test_output_file = os.path.join(OUTPUT_DIR, "test-tz.js")
 if (not os.path.exists(test_output_file)) or \
    os.stat(test_input_file).st_mtime > os.stat(test_output_file).st_mtime:
     tz_tests_module = imp.load_source("tz_test_generator", test_input_file)
     tests_io = open(test_output_file, "wb")
     tz_tests_module.output_tests(zoneinfo_dir, zdump_command, tests_io)
     tests_io.close()
+
+shutil.copy(os.path.join(INPUT_DIR, "test-tz-browser.html"), OUTPUT_DIR)
+shutil.copy(os.path.join(INPUT_DIR, "test-tz-node.js"), OUTPUT_DIR)
 
 shutil.rmtree(tztempdir)

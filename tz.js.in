@@ -219,7 +219,7 @@
     }
 
     // Exports:
-    window.tz = {
+    var tz_export = {
         /**
          * zoneAt(zone, dateObj)
          *
@@ -337,4 +337,9 @@
          */
         canonicalName: public_canonicalName,
     };
+    if (typeof module !== "undefined" && module.exports) {
+        module.exports = tz_export;
+    } else {
+        window.tz = tz_export;
+    }
 })();
