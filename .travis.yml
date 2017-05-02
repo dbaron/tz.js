@@ -5,3 +5,10 @@ before_script:
   - ./build.py
 script:
   - node ./output/test-tz-node.js
+
+# Use newer distribution that default (precise) to get a newer system
+# date command.  See comments in build-tests.py about America/Godthab.
+#
+# See https://docs.travis-ci.com/user/trusty-ci-environment
+dist: trusty
+sudo: false
