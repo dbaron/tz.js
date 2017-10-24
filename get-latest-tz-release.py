@@ -17,8 +17,9 @@
 
 import os
 import os.path
-from ftplib import FTP
+from urllib import urlopen, urlretrieve
 import sys
+import re
 
 __all__ = [
     "get_latest_tz_release"
@@ -27,56 +28,22 @@ __all__ = [
 SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def get_latest_tz_release():
-    current = {}
-    LATEST_LINK_STRING = "-latest.tar.gz -> "
-    RELEASES_STRING = "releases/"
-    def dir_callback(line):
-        index = line.find(LATEST_LINK_STRING)
-        if index == -1 or index < 7 or line[index-7] != " ":
-            return
-        which = line[ index - 6 : index ]
-        if which != "tzdata" and which != "tzcode":
-            return
-        dest = line[ index + len(LATEST_LINK_STRING) : ]
-        if not dest.startswith(RELEASES_STRING):
-            raise StandardError("unexpected file path: no releases/")
-        dest = dest[ len(RELEASES_STRING) : ]
-        current_is(which, dest)
+    version = ""
+    version_re = re.compile("<span id=\"version\">([a-z0-9]*)<\/span>")
+    for line in urlopen("https://www.iana.org/time-zones"):
+        match = version_re.search(line)
+        if match:
+            version = match.group(1)
+            break
 
-    FILE_SUFFIX = ".tar.gz"
-    def current_is(which, dest):
-        if not dest.startswith(which):
-            raise StandardError("unexpected filename start")
-        if not dest.endswith(FILE_SUFFIX):
-            raise StandardError("unexpected filename end")
-        version = dest[ len(which) : len(dest)-len(FILE_SUFFIX) ]
-        if which in current:
-            raise StandardError("already have current tz" + which)
-        current[which] = version
-
-    def check_download_file(name):
-        destfile = os.path.join(SOURCE_DIR, name)
-        tmpfile = os.path.join(SOURCE_DIR, name + ".part")
-        if os.path.exists(destfile):
-            return
-        sys.stderr.write("Downloading " + name + "\n")
-        io = open(tmpfile, 'wb')
-        ftp.retrbinary("RETR " + name, io.write)
-        io.close()
-        os.rename(tmpfile, destfile)
-
-    ftp = FTP("ftp.iana.org")
-    ftp.login("anonymous", os.path.basename(__file__))
-    ftp.cwd("tz")
-    ftp.dir(dir_callback)
-    if current["tzcode"] is None or current["tzdata"] is None:
-        raise StandardError("didn't find current versions")
-    ftp.cwd("releases")
-    check_download_file("tzcode" + current["tzcode"] + FILE_SUFFIX)
-    check_download_file("tzdata" + current["tzdata"] + FILE_SUFFIX)
-    ftp.quit()
-
-    return current
+    def get_dist(path):
+        dest_file = os.path.join(SOURCE_DIR, path)
+        if not os.path.exists(dest_file):
+            sys.stderr.write("Downloading " + path + "\n")
+            urlretrieve("https://www.iana.org/time-zones/repository/releases/" + path, dest_file)
+    get_dist("tzdata" + version + ".tar.gz")
+    get_dist("tzcode" + version + ".tar.gz")
+    return { "tzcode": version, "tzdata": version }
 
 if __name__ == '__main__':
     current = get_latest_tz_release()
