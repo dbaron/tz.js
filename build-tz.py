@@ -45,7 +45,7 @@ def build_tz(destdir, tzcodetar, tzdatatar):
                           cwd=sourcedir)
     subprocess.check_call(["make", "install",
                            "TOPDIR=" + outputdir,
-                           "CFLAGS=-DHAVE_GETTEXT=1 -DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone"],
+                           "CFLAGS=-DHAVE_GETTEXT=1 -DHAVE_SNPRINTF=1 -DTM_GMTOFF=tm_gmtoff -DTM_ZONE=tm_zone"],
                           cwd=sourcedir)
 
 if __name__ == '__main__':
