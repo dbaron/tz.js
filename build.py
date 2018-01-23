@@ -73,8 +73,8 @@ build_tz_module.build_tz(tztempdir,
                          "tzcode" + tzversions["tzcode"] + ".tar.gz",
                          "tzdata" + tzversions["tzdata"] + ".tar.gz")
 
-zoneinfo_dir = os.path.join(tztempdir, "output", "etc", "zoneinfo")
-zdump_command = os.path.join(tztempdir, "output", "etc", "zdump")
+zoneinfo_dir = os.path.join(tztempdir, "output", "usr", "share", "zoneinfo")
+zdump_command = os.path.join(tztempdir, "output", "usr", "bin", "zdump")
 
 tz_json_module = imp.load_source("compiled_to_json",
                                  os.path.join(INPUT_DIR,
