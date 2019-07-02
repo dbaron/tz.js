@@ -45,14 +45,14 @@ def read_zone(source_prefix, zone):
         if version != ("2",) and version != ("3",):
             raise StandardError("unexpected file version")
         io.read(15)
-        (ttisgmtcnt, ttisstdcnt, leapcnt, timecnt, typecnt, charcnt) = \
+        (ttisutccnt, ttisstdcnt, leapcnt, timecnt, typecnt, charcnt) = \
             read_fmt(io, "!llllll")
         times = list(read_fmt(io, "!" + str(timecnt) + timesize))
         ltidx = list(read_fmt(io, "!" + str(timecnt) + "B"))
         types = []
         for i in range(typecnt):
-            (gmtoff, isdst, abbrind) = read_fmt(io, "!l?B")
-            types.append({"o": gmtoff, "d": isdst, "a": abbrind})
+            (utoff, isdst, abbrind) = read_fmt(io, "!l?B")
+            types.append({"o": utoff, "d": isdst, "a": abbrind})
         abbrchars = read_fmt(io, "!" + str(charcnt) + "s")[0]
         for i in range(typecnt):
             ty = types[i]
@@ -63,7 +63,7 @@ def read_zone(source_prefix, zone):
         for i in range(leapcnt):
             leaps.append(read_fmt(io, "!" + timesize + "l"))
         isstd = list(read_fmt(io, "!" + str(ttisstdcnt) + "?"))
-        isgmt = list(read_fmt(io, "!" + str(ttisgmtcnt) + "?"))
+        isutc = list(read_fmt(io, "!" + str(ttisutccnt) + "?"))
 
         # Explicitly discard all the transitions prior to 1970, because
         # the time zone database itself isn't meaningful prior to 1970
@@ -108,24 +108,24 @@ def read_zone(source_prefix, zone):
         # Third, do the dropping.
         if len(types) != typecnt or \
            len(types) != len(isstd) or \
-           len(types) != len(isgmt):
+           len(types) != len(isutc):
             raise StandardError("length mismatch")
         new_types = []
         new_isstd = []
-        new_isgmt = []
+        new_isutc = []
         for i in range(typecnt):
             if newzoneidxs[i] is not None:
                 new_types.append(types[i])
                 new_isstd.append(isstd[i])
-                new_isgmt.append(isgmt[i])
+                new_isutc.append(isutc[i])
         types = new_types
         isstd = new_isstd
-        isgmt = new_isgmt
+        isutc = new_isutc
         # Fourth, renumber the pointers into these indices.
         ltidx = [newzoneidxs[idx] for idx in ltidx]
 
         return { "times": times, "ltidx": ltidx, "types": types,
-                 "isstd": isstd, "isgmt": isgmt }
+                 "isstd": isstd, "isutc": isutc }
 
     io = open(os.path.join(source_prefix, zone), "rb")
     # We expect version "2" of the TZif file, which has the data twice,
