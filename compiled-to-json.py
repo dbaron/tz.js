@@ -105,27 +105,25 @@ def read_zone(source_prefix, zone):
                 newidx = newzonecount
                 newzonecount = newzonecount + 1
             newzoneidxs.append(newidx)
-        # Third, do the dropping.
+
         if len(types) != typecnt or \
-           len(types) != len(isstd) or \
-           len(types) != len(isutc):
+           (len(isstd) != typecnt and len(isstd) != 0) or \
+           (len(isutc) != typecnt and len(isutc) != 0):
             raise StandardError("length mismatch")
+        # from this point on, ignore isstd and isutc (notably, don't
+        # drop entries from them, if present, to match the dropping we
+        # do from types).
+
+        # Third, do the dropping.
         new_types = []
-        new_isstd = []
-        new_isutc = []
         for i in range(typecnt):
             if newzoneidxs[i] is not None:
                 new_types.append(types[i])
-                new_isstd.append(isstd[i])
-                new_isutc.append(isutc[i])
         types = new_types
-        isstd = new_isstd
-        isutc = new_isutc
         # Fourth, renumber the pointers into these indices.
         ltidx = [newzoneidxs[idx] for idx in ltidx]
 
-        return { "times": times, "ltidx": ltidx, "types": types,
-                 "isstd": isstd, "isutc": isutc }
+        return { "times": times, "ltidx": ltidx, "types": types }
 
     io = open(os.path.join(source_prefix, zone), "rb")
     # We expect version "2" of the TZif file, which has the data twice,
