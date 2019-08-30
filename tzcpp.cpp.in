@@ -1,0 +1,110 @@
+#include <cctype>
+#include <cstring>
+#include <ctime>
+#include <vector>
+#include <unordered_map>
+#include <algorithm>
+#include "tzcpp.h"
+
+namespace tzcpp {
+
+    namespace {
+        struct ZoneInfoPriv {
+            // data_ contains 7-bytes null-terminated abbreviation and the last byte is dst
+            char data_[8];
+
+            // Zone abbreviation
+            const char* abbr() const {
+                return data_;
+            }
+
+            // Is daylight saving time?
+            bool is_dst() const {
+                return data_[7] != 0;
+            }
+
+            int offset;
+
+            ZoneInfoPriv(int o, const char* a, bool dst = false) : offset(o) {
+                size_t l = std::strlen(a);
+                if (l > 6)
+                    l = 6; // TODO: warning???
+                std::memset(data_, 0, sizeof(data_));
+                std::memcpy(data_, a, l);
+                data_[7] = dst;
+            }
+
+            ZoneInfoPriv(const ZoneInfoPriv&) = default;
+            ZoneInfoPriv(ZoneInfoPriv&&) = default;
+            ZoneInfoPriv& operator = (const ZoneInfoPriv&) = default;
+            ZoneInfoPriv& operator = (ZoneInfoPriv&&) = default;
+        };
+
+        struct TimezoneInfoPriv {
+            size_t info_idx;
+            std::time_t time;
+        };
+
+        struct TimezonePriv {
+            size_t begin;
+            size_t end;
+            const char* rule;
+        };
+
+        static std::vector<ZoneInfoPriv> zone_rules = {
+// @ZONE_RULES@
+        };
+
+        static std::vector<TimezoneInfoPriv> zones = {
+// @ZONES@
+        };
+
+        static std::unordered_map<std::string, TimezonePriv> database = {
+// @DATABASE@
+        };
+
+        static std::unordered_map<std::string, std::string> links = {
+// @LINKS@
+        };
+
+    } // anonymous namespace
+
+    ZoneInfo get_timezone(const char* zone, std::time_t t) {
+        auto it = database.find(zone);
+        if (it == database.end()) {
+            auto it2 = links.find(zone);
+            if (it2 == links.end())
+                return ZoneInfo{};
+            it = database.find(it2->second);
+            if (it == database.end())
+                return ZoneInfo{};
+        }
+        auto begin = zones.begin() + it->second.begin;
+        auto end = zones.begin() + it->second.end;
+
+        auto zit = std::lower_bound(begin, end, t, [] (const TimezoneInfoPriv& a, std::time_t b) {
+                return a.time < b;
+        });
+        if (zit == end) // extrapolate
+            --zit;
+        ZoneInfo res;
+        res.offset = zone_rules[zit->info_idx].offset;
+        res.abbr = zone_rules[zit->info_idx].abbr();
+        res.is_dst = zone_rules[zit->info_idx].is_dst();
+
+        return res;
+    }
+
+    ZoneInfo get_timezone(const std::string& z, std::time_t t) {
+        return get_timezone(z.c_str(), t);
+    }
+
+    const char* version() {
+        return "@VERSION@";
+    }
+
+    const char* data_version() {
+        return "@DATA_VERSION@";
+    }
+
+} // namespace tzcpp

@@ -100,6 +100,15 @@ for zone in json.loads(link_json):
         del tzs[zone]
 tz_json = json.dumps(tzs, sort_keys=True)
 
+tz_data = open(os.path.join(OUTPUT_DIR, "data.json"), "wb")
+json.dump({
+    "version" : version,
+    "tzversion" : tzversions["tzdata"],
+    "links" : json.loads(link_json),
+    "zones" : tzs
+}, tz_data)
+tz_data.close()
+
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
 tz_js_source = tz_js_source.replace("@@LINKS@@", link_json)
