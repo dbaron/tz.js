@@ -13,13 +13,7 @@ OUTPUT_CPP = os.path.join(OUTPUT_DIR, "tzcpp.cpp")
 INPUT_H = os.path.join(INPUT_DIR, "tzcpp.h")
 OUTPUT_H = os.path.join(OUTPUT_DIR, "tzcpp.h")
 
-if __name__ == '__main__':
-    with open(DATA_JSON, "rb") as f:
-        data_json = json.load(f)
-
-    links = data_json["links"]
-    zones = data_json["zones"]
-
+def build_cpp(version, tz_version, zones, links):
     # Process zones
     zones_list = []
     rules_list = []
@@ -39,10 +33,22 @@ if __name__ == '__main__':
     cpp_in_source = cpp_in_source.replace("// @ZONES@", "\n".join(zones_list))
     cpp_in_source = cpp_in_source.replace("// @DATABASE@", "\n".join(db_list))
     cpp_in_source = cpp_in_source.replace("// @LINKS@", "\n".join([ '            { "%s", "%s" },' % (k, v) for k, v in links.items() ]))
-    cpp_in_source = cpp_in_source.replace("@VERSION@", data_json["version"])
-    cpp_in_source = cpp_in_source.replace("@DATA_VERSION@", data_json["tzversion"])
+    cpp_in_source = cpp_in_source.replace("@VERSION@", version)
+    cpp_in_source = cpp_in_source.replace("@DATA_VERSION@", tz_version)
+
+    return cpp_in_source
+
+if __name__ == '__main__':
+    data_json = json.load(sys.stdin)
+
+    links = data_json["links"]
+    zones = data_json["zones"]
+    version = data_json["version"]
+    tz_version = data_json["tzversion"]
+
+    cpp_source = build_cpp(version, tz_version, zones, links)
 
     with open(OUTPUT_CPP, "wb") as cpp_out:
-        cpp_out.write(cpp_in_source)
+        cpp_out.write(cpp_source)
     shutil.copy(INPUT_H, OUTPUT_H)
 
