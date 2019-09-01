@@ -116,6 +116,7 @@ cpp_source = build_cpp_module.build_cpp(version, tzversions["tzdata"], tzs, json
 with open(os.path.join(OUTPUT_DIR, "tzcpp.cpp"), "wb") as cpp_out:
     cpp_out.write(cpp_source)
 shutil.copy(os.path.join(INPUT_DIR, "tzcpp.h"), os.path.join(OUTPUT_DIR, "tzcpp.h"))
+shutil.copy(os.path.join(INPUT_DIR, "tzcpp_test.cpp"), os.path.join(OUTPUT_DIR, "tzcpp_test.cpp"))
 
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])

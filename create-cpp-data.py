@@ -17,15 +17,31 @@ def build_cpp(version, tz_version, zones, links):
     # Process zones
     zones_list = []
     rules_list = []
+    zones_last = 0
     db_list = []
+    rules_map = { }
+    rule_names = { }
+    def rule_str(t):
+        res = '            { %d, "%s", %s },' % (t["o"], t["a"], str(t["d"]).lower())
+        if t["a"] not in rule_names:
+            rule_names[t["a"]] = set()
+        rule_names[t["a"]].add(res)
+        return res
+
+    def rule_idx(r):
+        s = rule_str(r)
+        if s not in rules_map:
+            rules_map[s] = len(rules_list)
+            rules_list.append(s)
+        return rules_map[s]
+
     for nm, zone in zones.items():
-        rules_begin = len(rules_list)
-        begin = len(zones_list)
-        for t in zone["types"]:
-            rules_list.append('            { %d, "%s", %s },' % (t["o"], t["a"], str(t["d"]).lower()) )
+        begin = zones_last
+        zones_list.append("// %s" % nm)
         for idx, t in zip(zone["ltidx"], zone["times"]):
-            zones_list.append('            { %d, %d },' % (idx + rules_begin, t))
-        db_list.append('            { "%s", { %d, %d, "%s" }},' % (nm, begin, len(zones_list), zone["rule"]))
+            zones_last += 1
+            zones_list.append('            { %d, %d },' % (rule_idx(zone["types"][idx]), t))
+        db_list.append('            { "%s", { %d, %d, "%s" }},' % (nm, begin, zones_last, zone["rule"]))
 
     with open(INPUT_CPP, "rb") as cpp_in:
         cpp_in_source = cpp_in.read()
