@@ -69,7 +69,7 @@ namespace tzcpp {
 // @LINKS@
         };
 
-        inline auto find_timezone(const char* zone, int64_t t, bool local_time = false) {
+        inline auto find_timezone(const char* zone, int64_t t, bool pseudo_local) {
             auto it = database.find(zone);
             if (it == database.end()) {
                 auto it2 = links.find(zone);
@@ -88,8 +88,8 @@ namespace tzcpp {
             if (zit == end) // extrapolate
                 return std::prev(zit);
 
-            if (local_time) {
-                while (zit != begin && zit->time + zone_rules[zit->info_idx].offset >= t)
+            if (pseudo_local) {
+                while (zit != begin && zit->time + zone_rules[zit->info_idx].offset > t)
                     --zit;
             } else {
                 while (zit != begin && zit->time > t)
@@ -101,16 +101,12 @@ namespace tzcpp {
 
     } // anonymous namespace
 
-    bool has_timezone(const std::string& tz) {
+    bool has_timezone(std::string tz) noexcept {
         return database.count(tz) || links.count(tz);
     }
 
-    bool has_timezone(const char* tz) {
-        return database.count(tz) || links.count(tz);
-    }
-
-    ZoneInfo get_timezone(const char* zone, int64_t t) {
-        auto zit = find_timezone(zone, t);
+    ZoneInfo get_timezone(std::string zone, int64_t t, bool pseudo_local) noexcept {
+        auto zit = find_timezone(zone.c_str(), t, pseudo_local);
         if (zit == zones.end())
             return ZoneInfo{};
 
@@ -122,40 +118,37 @@ namespace tzcpp {
         return res;
     }
 
-    ZoneInfo get_timezone(const std::string& z, int64_t t) {
-        return get_timezone(z.c_str(), t);
-    }
-
-    const char* version() {
+    const char* version() noexcept {
         return "@VERSION@";
     }
 
-    const char* data_version() {
+    const char* data_version() noexcept {
         return "@DATA_VERSION@";
     }
 
-    int64_t from_utc(const std::string& tz, int64_t t) {
-        return from_utc(tz.c_str(), t);
+    std::vector<std::string> all_timezones() {
+        std::vector<std::string> res;
+        for (const auto& zone : database)
+            res.push_back(zone.first);
+        for (const auto& link : links)
+            res.push_back(link.first);
+
+        return res;
     }
 
-    int64_t from_utc(const char* zone, int64_t t) {
-        auto zit = find_timezone(zone, t);
-        if (zit == zones.end())
-            return t;
+    std::vector<std::pair<int64_t, ZoneInfo>> dump_timezone(std::string timezone) {
+        std::vector<std::pair<int64_t, ZoneInfo>> res;
+        const auto& zone = database.at(timezone);
 
-        return t + zone_rules[zit->info_idx].offset;
-    }
+        for (size_t i = zone.begin; i != zone.end; ++i) {
+            res.emplace_back();
+            res.back().first = zones[i].time;
+            res.back().second.offset = zone_rules[zones[i].info_idx].offset;
+            res.back().second.is_dst = zone_rules[zones[i].info_idx].is_dst();
+            res.back().second.abbr = zone_rules[zones[i].info_idx].abbr();
+        }
 
-    int64_t from_local(const std::string& tz, int64_t t) {
-        return from_local(tz.c_str(), t);
-    }
-
-    int64_t from_local(const char* zone, int64_t t) {
-        auto zit = find_timezone(zone, t, true);
-        if (zit == zones.end())
-            return t;
-
-        return t - zone_rules[zit->info_idx].offset;
+        return res;
     }
 
 } // namespace tzcpp

@@ -116,7 +116,6 @@ cpp_source = build_cpp_module.build_cpp(version, tzversions["tzdata"], tzs, json
 with open(os.path.join(OUTPUT_DIR, "tzcpp.cpp"), "wb") as cpp_out:
     cpp_out.write(cpp_source)
 shutil.copy(os.path.join(INPUT_DIR, "tzcpp.h"), os.path.join(OUTPUT_DIR, "tzcpp.h"))
-shutil.copy(os.path.join(INPUT_DIR, "tzcpp_test.cpp"), os.path.join(OUTPUT_DIR, "tzcpp_test.cpp"))
 
 tz_js_source = tz_js_source.replace("@@VERSION@@", version)
 tz_js_source = tz_js_source.replace("@@TZDATA_VERSION@@", tzversions["tzdata"])
@@ -142,5 +141,14 @@ if (not os.path.exists(test_output_file)) or \
 
 shutil.copy(os.path.join(INPUT_DIR, "test-tz-browser.html"), OUTPUT_DIR)
 shutil.copy(os.path.join(INPUT_DIR, "test-tz-node.js"), OUTPUT_DIR)
+
+cpp_test_input_file = os.path.join(INPUT_DIR, "build-cpp-tests.py")
+cpp_test_output_file = os.path.join(OUTPUT_DIR, "tzcpp_test.cpp")
+if (not os.path.exists(cpp_test_output_file)) or \
+   os.stat(cpp_test_input_file).st_mtime > os.stat(cpp_test_output_file).st_mtime:
+    cpp_tz_tests_module = imp.load_source("cpp_tz_test_generator", cpp_test_input_file)
+    cpp_tests_io = open(cpp_test_output_file, "wb")
+    cpp_tz_tests_module.output_tests(zoneinfo_dir, zdump_command, cpp_tests_io)
+    cpp_tests_io.close()
 
 shutil.rmtree(tztempdir)
