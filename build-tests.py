@@ -144,9 +144,17 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
         zdump_re = re.compile("^" + zone + "  ([^=]+) = ([^=]+) isdst=([01]) gmtoff=(-?\d+)$")
         for line in zdump.stdout:
             line = line.rstrip("\n")
+            # Only needed for older zdump:
             if line.endswith(" = NULL"):
                 continue
-            yield zdump_re.match(line).groups()
+            # Only needed for newer zdump:
+            if ("(localtime failed)" in line) or ("(gmtime failed)" in line):
+                continue
+            groups = zdump_re.match(line).groups()
+            # Only needed for newer zdump:
+            if groups[0].endswith("-2147481748 UT"):
+                continue
+            yield groups
     # FIXME: spread this across cores
     zdumps = [(zone, list(zdump_for(zone))) for zone in all_zones]
     # Write all the dates to one file and run them through a single
