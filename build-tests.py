@@ -28,6 +28,8 @@ import re
 import math
 import tempfile
 
+from optparse import OptionParser
+
 __all__ = [
     "output_tests"
 ]
