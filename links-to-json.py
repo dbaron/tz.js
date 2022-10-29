@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python2
 
 # tz.js - Library for working with timezones in JavaScript
 
