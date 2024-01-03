@@ -152,7 +152,7 @@ check_offset("Etc/UTC", 2519888400.001, 0, "UTC");
                 continue
             groups = zdump_re.match(line).groups()
             # Only needed for newer zdump:
-            if groups[0].endswith("-2147481748 UT"):
+            if groups[0].endswith("-2147481748 UT") or groups[0].endswith("2147485547 UT"):
                 continue
             yield groups
     # FIXME: spread this across cores
