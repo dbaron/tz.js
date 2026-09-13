@@ -29,7 +29,7 @@ SOURCE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 def get_latest_tz_release():
     version = ""
-    version_re = re.compile("<span id=\"version\">([a-z0-9]*)<\/span>")
+    version_re = re.compile("<a class=\"tile tile-link\" href=\"/time-zones/releases/([a-z0-9]*)\">")
     for line in urlopen("https://www.iana.org/time-zones"):
         match = version_re.search(line)
         if match:
